@@ -85,35 +85,37 @@ class DataBuild(Information):
 # df = web.DataReader('^GSPC', 'yahoo', start='1950-01-03', end='2017-09-14')
 # print(df.head())
 
-def main():
-
-    date_start = '1984-01-01'
-    date_end = '2019-01-11'
-    symbol = 'SPY'
+def main(ticker, source, date_start, date_end, symbol):
 
     export_path = os.getcwd() + "\\Datastore\\2019\\"
-    indicators_filepath = export_path + "spy_indicators_2018.csv"
+    indicators_filepath = export_path + symbol + "indicators_2018.csv"
 
     # bars ia a pandas dataframe that we will pass
 
-    bars = web.DataReader('^GSPC', 'yahoo', start=date_start, end=date_end)
+    bars = web.DataReader(ticker, source, start=date_start, end=date_end)
 
     # bars = quandl.get('YAHOO/INDEX_GSPC', authtoken='yhwsDSnRYS6nsJN7kGAb', trim_start=date_start,
     #                  trim_end=date_end)
 
     print(bars.head())
     # create a csv for our own amusement
-    bars.to_csv(export_path + "spy_bars.csv")
+    bars.to_csv(export_path + symbol + "_bars.csv")
     # Create indicators
     # on instantiating our DataBuild class it automatically creates the indicators that we need in a pandas dataframe.
     infobars = DataBuild(symbol, bars)
 
-    # we then take the indications and save it to the csv
+    # we then take the indicators and save it to the csv
     infobars.indicators.to_csv(indicators_filepath)
 
 if __name__ == "__main__":
-    # print("hello")
-    main()
+
+    ticker = '^GSPC'
+    source = 'yahoo'
+    date_start = '1984-01-01'
+    symbol = 'SPX'
+    date_end = '2019-01-11'
+
+    main(ticker, source, date_start, date_end, symbol)
 
 # if __name__ == "__main__":
 #     # Obtain daily bars of SPY
