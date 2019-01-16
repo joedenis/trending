@@ -15,6 +15,7 @@ import datetime as dt
 # when we import a file it runs that code
 from backtest import Information
 import os
+from pathlib import Path
 
 class DataBuild(Information):
     """Adds nnecessary indicators and other derived information to
@@ -85,10 +86,12 @@ class DataBuild(Information):
 # df = web.DataReader('^GSPC', 'yahoo', start='1950-01-03', end='2017-09-14')
 # print(df.head())
 
+
 def main(ticker, source, date_start, date_end, symbol):
 
-    export_path = os.getcwd() + "\\Datastore\\2019\\"
-    indicators_filepath = export_path + symbol + "indicators_2018.csv"
+    # export_path = Path(os.getcwd() + "/Datastore/")
+    export_path = Path(os.getcwd())
+    indicators_filepath = export_path / "datastore" / (symbol + "indicators_2018.csv")
 
     # bars ia a pandas dataframe that we will pass
 
@@ -99,7 +102,7 @@ def main(ticker, source, date_start, date_end, symbol):
 
     print(bars.head())
     # create a csv for our own amusement
-    bars.to_csv(export_path + symbol + "_bars.csv")
+    bars.to_csv(export_path / "datastore" / (symbol + "_bars.csv"))
     # Create indicators
     # on instantiating our DataBuild class it automatically creates the indicators that we need in a pandas dataframe.
     infobars = DataBuild(symbol, bars)
@@ -116,6 +119,9 @@ if __name__ == "__main__":
     date_end = '2019-01-11'
 
     main(ticker, source, date_start, date_end, symbol)
+
+
+
 
 # if __name__ == "__main__":
 #     # Obtain daily bars of SPY
