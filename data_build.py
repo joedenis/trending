@@ -73,6 +73,13 @@ class DataBuild(Information):
         indicators['Bollinger Low'] = indicators_trading['Bollinger Low']
         indicators[['Bollinger High', 'Bollinger Low']] = indicators[['Bollinger High', 'Bollinger Low']].ffill()
 
+        # 1 month, 3 month, 6 month returns
+        # returns = (vfiax_monthly.open - vfiax_monthly.open.shift(1)) / vfiax_monthly.open.shift(1)
+        # 20 business days in a month
+        indicators["1_month"] = (indicators["Close"] - indicators["Close"].shift(21)) / indicators["Close"].shift(21)
+
+        indicators["3_month"] = (indicators["Close"] - indicators["Close"].shift(63)) / indicators["Close"].shift(63)
+        indicators["6_month"] = (indicators["Close"] - indicators["Close"].shift(126)) / indicators["Close"].shift(126)
         return indicators
 
 # What does this __name__ == "__
