@@ -2,9 +2,8 @@
 
 import numpy as np
 import pandas as pd
-import Quandl  # Necessary for obtaining financial data easily
 import datetime as dt
-from backtest import Strategy, Portfolio
+from trending.backtest import Strategy
 import os
 
 

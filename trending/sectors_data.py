@@ -1,4 +1,4 @@
-import data_build
+from trending import data_build
 
 sectors = ["XLU", "XLV", "XLY", "XLK", "XLP", "XLI", "XLF", "XLB", "XLE"]
 

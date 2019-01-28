@@ -1,4 +1,4 @@
-import data_build
+from trending import data_build
 
 world = ["SPY", "VINEX", "VUSTX"]
 
