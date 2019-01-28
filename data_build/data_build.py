@@ -4,16 +4,14 @@ __author__ = 'SDee and JD'
 """ This build the Information class.  Here we can """
 
 import numpy as np
-import pandas as pd
 # unfortunately  quandl has sopped foworking for the free spx data so we use pandas datareader
 # import quandl  # Necessary for obtaining financial data easily
 
 import pandas_datareader.data as web
-import datetime as dt
 
 # when we import a mmodule the name ot the module will be imported from the file
 # when we import a file it runs that code
-from backtest import Information
+from data_build.backtest import Information
 import os
 from pathlib import Path
 

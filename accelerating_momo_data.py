@@ -1,4 +1,4 @@
-import data_build
+from data_build import data_build
 
 world = ["SPY", "VINEX", "VUSTX"]
 

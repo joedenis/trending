@@ -1,5 +1,6 @@
-import data_build
+from data_build import data_build
 
+# 9 sectors for the SPX
 sectors = ["XLU", "XLV", "XLY", "XLK", "XLP", "XLI", "XLF", "XLB", "XLE"]
 
 # ticker = '^GSPC'
