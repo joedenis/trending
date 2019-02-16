@@ -15,7 +15,7 @@ class IBSimulatedExecutionHandler(AbstractExecutionHandler):
     handler.
     """
 
-    def __init__(self, events_queue, price_handler, compliance=None):
+    def __init__(self, events_queue, price_handler):
         """
         Initialises the handler, setting the event queue
         as well as access to local pricing.
@@ -25,7 +25,6 @@ class IBSimulatedExecutionHandler(AbstractExecutionHandler):
         """
         self.events_queue = events_queue
         self.price_handler = price_handler
-        self.compliance = compliance
 
     def calculate_ib_commission(self, quantity, fill_price):
         """
@@ -79,5 +78,5 @@ class IBSimulatedExecutionHandler(AbstractExecutionHandler):
             )
             self.events_queue.put(fill_event)
 
-            if self.compliance is not None:
-                self.compliance.record_trade(fill_event)
+            # if self.compliance is not None:
+            #     self.compliance.record_trade(fill_event)
