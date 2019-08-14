@@ -118,12 +118,15 @@ class AcceleratingMomentumStrategy(AbstractStrategy):
 				print("**************")
 				print("INVESTED IN", no_invested, "ASSETS")
 				print("**************")
-
+			elif no_invested == 0 and self.bars > self.third_window:
+				print("**************")
+				print("EMPTY PORTFOLIO")
+				print("**************")
 			# if self.tickers_invested
 
 			for key in self.tickers_invested:
 				if key != self.asset_to_invest_in and self.tickers_invested[key] == True:
-					print("We should not be invested EXITING")
+					print("We should not be invested EXITING", key, "NOT equal to", self.asset_to_invest_in)
 					print("EXIT %s: %s" % (event.ticker, event.time))
 					liquidate_signal = SignalEvent(event.ticker, "EXIT")
 					self.events_queue.put(liquidate_signal)
@@ -174,6 +177,7 @@ class AcceleratingMomentumStrategy(AbstractStrategy):
 						liquidate_signal = SignalEvent(ticker, "EXIT")
 						self.events_queue.put(liquidate_signal)
 						self.tickers_invested[ticker] = False
+			self.bars += 1
 
 			"""
 			ABOVE WE NEED to buy the asset.  Check if we are already in the asset.  If we are do nothing.
