@@ -53,7 +53,7 @@ class AcceleratingMomentumStrategy(AbstractStrategy):
 	):
 		self.tickers = tickers
 		self.safe_asset = safe_asset
-		self.asset_to_invest_in = None
+		self.asset_to_invest_in = (None, None)
 		self.events_queue = events_queue
 		self.trade_freq = trade_freq
 		self.first_window = first_window
@@ -124,15 +124,8 @@ class AcceleratingMomentumStrategy(AbstractStrategy):
 				print("**************")
 			# if self.tickers_invested
 
-			for key in self.tickers_invested:
-				if key != self.asset_to_invest_in and self.tickers_invested[key] == True:
-					print("We should not be invested EXITING", key, "NOT equal to", self.asset_to_invest_in)
-					print("EXIT %s: %s" % (event.ticker, event.time))
-					liquidate_signal = SignalEvent(event.ticker, "EXIT")
-					self.events_queue.put(liquidate_signal)
-					self.tickers_invested[event.ticker] = False
 
-			# append the price to the queue
+			# append the price to the momo queue this might be WRONG!!!
 			self.ticker_bars[event.ticker].append(event.adj_close_price)
 
 			# this assumes an equal amount of bars in each input
@@ -158,25 +151,44 @@ class AcceleratingMomentumStrategy(AbstractStrategy):
 						rank_assets[ticker] = accel_momo
 
 				# NOW WE KNOW WHICH ASSET TO BUY DO WE BUY IT ON THE NEXT DAY??
-				asset_to_trade = self.which_asset_to_invest(rank_assets)
+
 
 
 				# action at end of the month
 				if self._end_of_month(event.time):
-					print(asset_to_trade, "IS THE ASSET TO OWN", event.time)
-					self.asset_to_invest_in = asset_to_trade
+					if self.asset_to_invest_in[0] is None or self.asset_to_invest_in[0].month != event.time.month:
+						asset_to_trade = self.which_asset_to_invest(rank_assets)
+						print(asset_to_trade, "IS THE ASSET TO OWN", event.time)
+						self.asset_to_invest_in = (event.time, asset_to_trade)
+
+
 					ticker = event.ticker
 					# and we are not invested
-					if ticker == asset_to_trade and not self.tickers_invested[ticker]:
+					if ticker == self.asset_to_invest_in[1] and not self.tickers_invested[ticker]:
 						print("LONG %s: %s" % (ticker, event.time))
 						long_signal = SignalEvent(ticker, "BOT", suggested_quantity=self.base_quantity)
 						self.events_queue.put(long_signal)
 						self.tickers_invested[ticker] = True
-					elif ticker != asset_to_trade and self.tickers_invested[ticker]:
+					elif ticker != self.asset_to_invest_in[1] and self.tickers_invested[ticker]:
 						print("EXIT %s: %s" % (ticker, event.time))
 						liquidate_signal = SignalEvent(ticker, "EXIT")
 						self.events_queue.put(liquidate_signal)
 						self.tickers_invested[ticker] = False
+			# else if there is an asset we should be in.
+			elif self.asset_to_invest_in[1] is not None:
+				for key in self.tickers_invested:
+					if self.tickers_invested[key] and key != self.asset_to_invest_in[1] and key == event.ticker:
+						print("We should not be invested EXITING", key, "NOT equal to", self.asset_to_invest_in[1])
+						print("EXIT %s: %s" % (event.ticker, event.time))
+						liquidate_signal = SignalEvent(event.ticker, "EXIT")
+						self.events_queue.put(liquidate_signal)
+						self.tickers_invested[event.ticker] = False
+					elif not self.tickers_invested[key] and key == self.asset_to_invest_in[1] and key == event.ticker:
+						print("LONG %s: %s" % (ticker, event.time))
+						long_signal = SignalEvent(ticker, "BOT", suggested_quantity=self.base_quantity)
+						self.events_queue.put(long_signal)
+						self.tickers_invested[ticker] = True
+
 			self.bars += 1
 
 			"""
