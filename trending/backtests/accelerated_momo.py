@@ -150,4 +150,8 @@ if __name__ == "__main__":
     )
     tickers = ["SPY", "SPY"]
     filename = None
-    run(config, testing, tickers, filename)
+    spy_momo = run(config, testing, tickers, filename)
+
+    print(spy_momo['positions'])
+
+

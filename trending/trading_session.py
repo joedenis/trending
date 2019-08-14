@@ -8,7 +8,7 @@ from .price_parser import PriceParser
 from .position_sizer.fixed import FixedPositionSizer
 from .risk_manager.example import ExampleRiskManager
 from .portfolio_handler import PortfolioHandler
-# from .compliance.example import ExampleCompliance
+from .compliance.example import ExampleCompliance
 from .execution_handler.ib_simulated import IBSimulatedExecutionHandler
 from .statistics.tearsheet import TearsheetStatistics
 
@@ -23,6 +23,7 @@ class TradingSession(object):
         equity, start_date, end_date, events_queue,
         session_type="backtest", end_session_time=None,
         price_handler=None, portfolio_handler=None,
+        compliance = None,
         position_sizer=None,
         execution_handler=None, risk_manager=None,
         statistics=None, sentiment_handler=None,
@@ -41,7 +42,7 @@ class TradingSession(object):
         self.events_queue = events_queue
         self.price_handler = price_handler
         self.portfolio_handler = portfolio_handler
-        # self.compliance = compliance
+        self.compliance = compliance
         self.execution_handler = execution_handler
         self.position_sizer = position_sizer
         self.risk_manager = risk_manager
@@ -84,13 +85,14 @@ class TradingSession(object):
                 self.risk_manager
             )
 
-        # if self.compliance is None:
-        #     self.compliance = ExampleCompliance(self.config)
+        if self.compliance is None:
+            self.compliance = ExampleCompliance(self.config)
 
         if self.execution_handler is None:
             self.execution_handler = IBSimulatedExecutionHandler(
                 self.events_queue,
-                self.price_handler
+                self.price_handler,
+                self.compliance
             )
 
         if self.statistics is None:

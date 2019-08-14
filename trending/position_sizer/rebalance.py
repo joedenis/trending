@@ -1,7 +1,7 @@
 from math import floor
 
 from .base import AbstractPositionSizer
-from qstrader.price_parser import PriceParser
+from trending.price_parser import PriceParser
 
 
 class LiquidateRebalancePositionSizer(AbstractPositionSizer):
