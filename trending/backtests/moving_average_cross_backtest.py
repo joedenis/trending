@@ -87,8 +87,8 @@ def run(config, testing, tickers, filename):
     events_queue = queue.Queue()
     strategy = MovingAverageCrossStrategy(
         tickers[0], events_queue,
-        short_window=100,
-        long_window=300
+        short_window=50,
+        long_window=100
     )
 
     # Set up the backtest
@@ -112,6 +112,12 @@ if __name__ == "__main__":
     config = settings.from_file(
         settings.DEFAULT_CONFIG_FILENAME, testing
     )
+
+
     tickers = ["AAPL", "SPY"]
     filename = None
-    run(config, testing, tickers, filename)
+    ma_crossover = run(config, testing, tickers, filename)
+    for key in ma_crossover:
+        print(key)
+    positions_history = ma_crossover['positions']
+    print(ma_crossover['positions'])
