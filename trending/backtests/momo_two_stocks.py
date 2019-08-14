@@ -53,6 +53,7 @@ class AcceleratingMomentumStrategy(AbstractStrategy):
 	):
 		self.tickers = tickers
 		self.safe_asset = safe_asset
+		self.asset_to_invest_in = None
 		self.events_queue = events_queue
 		self.trade_freq = trade_freq
 		self.first_window = first_window
@@ -109,6 +110,25 @@ class AcceleratingMomentumStrategy(AbstractStrategy):
 			event.type in [EventType.BAR, EventType.TICK] and
 			event.ticker in self.tickers
 		):
+			no_invested = 0
+			for key in self.tickers_invested:
+				if self.tickers_invested[key]:
+					no_invested += 1
+			if no_invested > 1:
+				print("**************")
+				print("INVESTED IN", no_invested, "ASSETS")
+				print("**************")
+
+			# if self.tickers_invested
+
+			for key in self.tickers_invested:
+				if key != self.asset_to_invest_in and self.tickers_invested[key] == True:
+					print("We should not be invested EXITING")
+					print("EXIT %s: %s" % (event.ticker, event.time))
+					liquidate_signal = SignalEvent(event.ticker, "EXIT")
+					self.events_queue.put(liquidate_signal)
+					self.tickers_invested[event.ticker] = False
+
 			# append the price to the queue
 			self.ticker_bars[event.ticker].append(event.adj_close_price)
 
@@ -136,8 +156,12 @@ class AcceleratingMomentumStrategy(AbstractStrategy):
 
 				# NOW WE KNOW WHICH ASSET TO BUY DO WE BUY IT ON THE NEXT DAY??
 				asset_to_trade = self.which_asset_to_invest(rank_assets)
+
+
 				# action at end of the month
 				if self._end_of_month(event.time):
+					print(asset_to_trade, "IS THE ASSET TO OWN", event.time)
+					self.asset_to_invest_in = asset_to_trade
 					ticker = event.ticker
 					# and we are not invested
 					if ticker == asset_to_trade and not self.tickers_invested[ticker]:
@@ -160,7 +184,7 @@ class AcceleratingMomentumStrategy(AbstractStrategy):
 
 def run(config, testing, tickers, safe_asset, filename):
 	# Backtest information
-	title = ['Accelerating momentum for,', tickers, ': 1m, 3m, 6m > 0']
+	title = ['Accelerating momentum for SPX, BONDS, MSCI: 1m, 3m, 6m > 0']
 	initial_equity = 10000.0
 	start_date = datetime.datetime(2000, 1, 1)
 	end_date = datetime.datetime(2014, 1, 1)
