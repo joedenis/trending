@@ -22,6 +22,8 @@ import pandas as pd
 from trending import settings
 
 from trending.strategy.base import AbstractStrategy
+from trending.position_sizer.rebalance import LiquidateRebalancePositionSizer
+
 from trending.event import SignalEvent, EventType
 
 import queue
@@ -202,8 +204,8 @@ def run(config, testing, tickers, safe_asset, filename):
 	# Backtest information
 	title = ['Accelerating momentum for SPX, BONDS, MSCI: 1m, 3m, 6m > 0']
 	initial_equity = 10000.0
-	start_date = datetime.datetime(2000, 1, 1)
-	end_date = datetime.datetime(2015, 1, 1)
+	start_date = datetime.datetime(2015, 1, 1)
+	end_date = datetime.datetime(2019, 7, 1)
 
 	# Use the MAC Strategy
 	events_queue = queue.Queue()
@@ -211,11 +213,23 @@ def run(config, testing, tickers, safe_asset, filename):
 		tickers, safe_asset, events_queue
 	)
 
+	# Use the liquidate and rebalance position sizer
+	# with prespecified ticker weights
+	ticker_weights = {
+		"SPY":1,
+		"VUSTX":1,
+		"VINEX":1
+	}
+	position_sizer = LiquidateRebalancePositionSizer(
+		ticker_weights
+	)
+
+
 	# Set up the backtest
 	backtest = TradingSession(
 		config, strategy, tickers,
 		initial_equity, start_date, end_date,
-		events_queue, title=title,
+		events_queue, position_sizer=position_sizer,title=title,
 		benchmark=tickers[1],
 	)
 	results = backtest.start_trading(testing=testing)
