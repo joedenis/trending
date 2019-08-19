@@ -96,7 +96,7 @@ def main(ticker, source, date_start, date_end, symbol):
 
     # export_path = Path(os.getcwd() + "/Datastore/")
     export_path = Path(os.getcwd())
-    indicators_filepath = export_path / "datastore" / (symbol + "indicators_2018.csv")
+    indicators_filepath = export_path / "datastore" / (symbol + "_indicators.csv")
 
     # bars ia a pandas dataframe that we will pass
 
@@ -107,7 +107,7 @@ def main(ticker, source, date_start, date_end, symbol):
 
     print(bars.head())
     # create a csv for our own amusement
-    bars.to_csv(export_path / "datastore" / (symbol + "_bars.csv"))
+    bars.to_csv(export_path / "datastore" / (symbol + ".csv"))
     # Create indicators
     # on instantiating our DataBuild class it automatically creates the indicators that we need in a pandas dataframe.
     infobars = DataBuild(symbol, bars)
