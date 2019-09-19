@@ -204,7 +204,7 @@ def run(config, testing, tickers, safe_asset, filename):
 	# Backtest information
 	title = ['Accelerating momentum for SPX, BONDS, MSCI: 1m, 3m, 6m > 0']
 	initial_equity = 10000.0
-	start_date = datetime.datetime(2015, 1, 1)
+	start_date = datetime.datetime(2000, 1, 1)
 	end_date = datetime.datetime(2019, 7, 1)
 
 	# Use the MAC Strategy
