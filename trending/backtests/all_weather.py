@@ -80,7 +80,7 @@ def run(config, testing, tickers, filename):
 		'Monthly Liquidate/Rebalance on All-Weather\n30%/15%/40%/7.5%/7.5% SPY/IEF/TLT/GLD/DBC Portfolio'
 	]
 	initial_equity = 500000.0
-	start_date = datetime.datetime(2007, 1, 1)
+	start_date = datetime.datetime(2016, 1, 1)
 	end_date = datetime.datetime(2019, 6, 12)
 
 	# Use the Monthly Liquidate And Rebalance strategy
