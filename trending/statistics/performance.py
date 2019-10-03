@@ -98,6 +98,9 @@ def create_drawdowns(returns):
     )
     return perf["Drawdown"], np.max(perf["Drawdown"]), duration
 
+def max_min_daily_returns(returns):
+    return max(returns), min(returns)
+
 
 def rsquared(x, y):
     """

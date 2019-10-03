@@ -94,6 +94,9 @@ class TearsheetStatistics(AbstractStatistics):
         # Drawdown, max drawdown, max drawdown duration
         dd_s, max_dd, dd_dur = perf.create_drawdowns(cum_returns_s)
 
+        # Max and Min daily return
+        daily_max, daily_min = perf.max_min_daily_returns(returns_s)
+
         statistics = {}
 
         # Equity statistics
@@ -109,6 +112,8 @@ class TearsheetStatistics(AbstractStatistics):
         statistics["returns"] = returns_s
         statistics["rolling_sharpe"] = rolling_sharpe_s
         statistics["cum_returns"] = cum_returns_s
+        statistics["daily_max"] = daily_max
+        statistics["daily_min"] = daily_min
 
         positions = self._get_positions()
         if positions is not None:
@@ -132,6 +137,8 @@ class TearsheetStatistics(AbstractStatistics):
             statistics["returns_b"] = returns_b
             statistics["rolling_sharpe_b"] = rolling_sharpe_b
             statistics["cum_returns_b"] = cum_returns_b
+            statistics["daily_max"] = daily_max
+            statistics["daily_min"] = daily_min
 
         return statistics
 
@@ -369,6 +376,8 @@ class TearsheetStatistics(AbstractStatistics):
         rsq = perf.rsquared(range(cum_returns.shape[0]), cum_returns)
         dd, dd_max, dd_dur = perf.create_drawdowns(cum_returns)
 
+        # daily_min, daily_max = perf.max_min_daily_returns(returns)
+
         ax.text(0.25, 8.9, 'Total Return', fontsize=8)
         ax.text(7.50, 8.9, '{:.0%}'.format(tot_ret), fontweight='bold', horizontalalignment='right', fontsize=8)
 
@@ -386,12 +395,19 @@ class TearsheetStatistics(AbstractStatistics):
 
         ax.text(0.25, 3.9, 'R-Squared', fontsize=8)
         ax.text(7.50, 3.9, '{:.2f}'.format(rsq), fontweight='bold', horizontalalignment='right', fontsize=8)
-
-        ax.text(0.25, 2.9, 'Max Daily Drawdown', fontsize=8)
+        # changed from Max Daily Drawdown which was incorrect
+        ax.text(0.25, 2.9, 'Max Drawdown', fontsize=8)
         ax.text(7.50, 2.9, '{:.2%}'.format(dd_max), color='red', fontweight='bold', horizontalalignment='right', fontsize=8)
 
         ax.text(0.25, 1.9, 'Max Drawdown Duration', fontsize=8)
         ax.text(7.50, 1.9, '{:.0f}'.format(dd_dur), fontweight='bold', horizontalalignment='right', fontsize=8)
+
+        # ax.text(0.25, 2.9, 'Largest Loss Day', fontsize=8)
+        # ax.text(7.50, 2.9, '{:.2%}'.format(daily_min), color='red', fontweight='bold', horizontalalignment='right',
+        #         fontsize=8)
+        #
+        # ax.text(0.25, 8.9, 'Largest Gain Day', fontsize=8)
+        # ax.text(7.50, 8.9, '{:.0%}'.format(daily_max), fontweight='bold', horizontalalignment='right', fontsize=8)
 
         ax.text(0.25, 0.9, 'Trades per Year', fontsize=8)
         ax.text(7.50, 0.9, '{:.1f}'.format(trd_yr), fontweight='bold', horizontalalignment='right', fontsize=8)
@@ -527,6 +543,8 @@ class TearsheetStatistics(AbstractStatistics):
         mly_ret = perf.aggregate_returns(returns, 'monthly')
         yly_ret = perf.aggregate_returns(returns, 'yearly')
 
+        daily_max, daily_min = perf.max_min_daily_returns(returns)
+
         mly_pct = mly_ret[mly_ret >= 0].shape[0] / float(mly_ret.shape[0])
         mly_avg_win_pct = np.mean(mly_ret[mly_ret >= 0])
         mly_avg_loss_pct = np.mean(mly_ret[mly_ret < 0])
@@ -536,43 +554,54 @@ class TearsheetStatistics(AbstractStatistics):
         yly_max_win_pct = np.max(yly_ret)
         yly_max_loss_pct = np.min(yly_ret)
 
-        ax.text(0.5, 8.9, 'Winning Months %', fontsize=8)
-        ax.text(9.5, 8.9, '{:.0%}'.format(mly_pct), fontsize=8, fontweight='bold',
+        ax.text(0.5, 9.9, 'Winning Months %', fontsize=8)
+        ax.text(9.5, 9.9, '{:.0%}'.format(mly_pct), fontsize=8, fontweight='bold',
                 horizontalalignment='right')
 
-        ax.text(0.5, 7.9, 'Average Winning Month %', fontsize=8)
-        ax.text(9.5, 7.9, '{:.2%}'.format(mly_avg_win_pct), fontsize=8, fontweight='bold',
+        ax.text(0.5, 8.9, 'Average Winning Month %', fontsize=8)
+        ax.text(9.5, 8.9, '{:.2%}'.format(mly_avg_win_pct), fontsize=8, fontweight='bold',
                 color='red' if mly_avg_win_pct < 0 else 'green',
                 horizontalalignment='right')
 
-        ax.text(0.5, 6.9, 'Average Losing Month %', fontsize=8)
-        ax.text(9.5, 6.9, '{:.2%}'.format(mly_avg_loss_pct), fontsize=8, fontweight='bold',
+        ax.text(0.5, 7.9, 'Average Losing Month %', fontsize=8)
+        ax.text(9.5, 7.9, '{:.2%}'.format(mly_avg_loss_pct), fontsize=8, fontweight='bold',
                 color='red' if mly_avg_loss_pct < 0 else 'green',
                 horizontalalignment='right')
 
-        ax.text(0.5, 5.9, 'Best Month %', fontsize=8)
-        ax.text(9.5, 5.9, '{:.2%}'.format(mly_max_win_pct), fontsize=8, fontweight='bold',
+        ax.text(0.5, 6.9, 'Best Month %', fontsize=8)
+        ax.text(9.5, 6.9, '{:.2%}'.format(mly_max_win_pct), fontsize=8, fontweight='bold',
                 color='red' if mly_max_win_pct < 0 else 'green',
                 horizontalalignment='right')
 
-        ax.text(0.5, 4.9, 'Worst Month %', fontsize=8)
-        ax.text(9.5, 4.9, '{:.2%}'.format(mly_max_loss_pct), fontsize=8, fontweight='bold',
+        ax.text(0.5, 5.9, 'Worst Month %', fontsize=8)
+        ax.text(9.5, 5.9, '{:.2%}'.format(mly_max_loss_pct), fontsize=8, fontweight='bold',
                 color='red' if mly_max_loss_pct < 0 else 'green',
                 horizontalalignment='right')
 
-        ax.text(0.5, 3.9, 'Winning Years %', fontsize=8)
-        ax.text(9.5, 3.9, '{:.0%}'.format(yly_pct), fontsize=8, fontweight='bold',
+        ax.text(0.5, 4.9, 'Winning Years %', fontsize=8)
+        ax.text(9.5, 4.9, '{:.0%}'.format(yly_pct), fontsize=8, fontweight='bold',
                 horizontalalignment='right')
 
-        ax.text(0.5, 2.9, 'Best Year %', fontsize=8)
-        ax.text(9.5, 2.9, '{:.2%}'.format(yly_max_win_pct), fontsize=8,
+        ax.text(0.5, 3.9, 'Best Year %', fontsize=8)
+        ax.text(9.5, 3.9, '{:.2%}'.format(yly_max_win_pct), fontsize=8,
                 fontweight='bold', color='red' if yly_max_win_pct < 0 else 'green',
                 horizontalalignment='right')
 
-        ax.text(0.5, 1.9, 'Worst Year %', fontsize=8)
-        ax.text(9.5, 1.9, '{:.2%}'.format(yly_max_loss_pct), fontsize=8,
+        ax.text(0.5, 2.9, 'Worst Year %', fontsize=8)
+        ax.text(9.5, 2.9, '{:.2%}'.format(yly_max_loss_pct), fontsize=8,
                 fontweight='bold', color='red' if yly_max_loss_pct < 0 else 'green',
                 horizontalalignment='right')
+
+        ax.text(0.5, 1.9, 'Best Day %', fontsize=8)
+        ax.text(9.5, 1.9, '{:.2%}'.format(daily_max), fontsize=8, fontweight='bold',
+                color='red' if daily_max < 0 else 'green',
+                horizontalalignment='right')
+
+        ax.text(0.5, 0.9, 'Worst Day %', fontsize=8)
+        ax.text(9.5, 0.9, '{:.2%}'.format(daily_min), fontsize=8, fontweight='bold',
+                color='red' if daily_min < 0 else 'green',
+                horizontalalignment='right')
+
 
         # ax.text(0.5, 0.9, 'Positive 12 Month Periods', fontsize=8)
         # ax.text(9.5, 0.9, num_trades, fontsize=8, fontweight='bold', horizontalalignment='right')
@@ -588,7 +617,7 @@ class TearsheetStatistics(AbstractStatistics):
         ax.set_ylabel('')
         ax.set_xlabel('')
 
-        ax.axis([0, 10, 0, 10])
+        ax.axis([0, 11, 0, 11])
         return ax
 
     def plot_results(self, filename=None):
