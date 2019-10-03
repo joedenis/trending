@@ -47,7 +47,10 @@ def run(config, testing, tickers, _filename):
     title = ['Buy and Hold Example on %s' % tickers[0]]
     initial_equity = 400000.0
     start_date = datetime.datetime(2019, 1, 1)
-    end_date = datetime.datetime(2019, 10, 1)
+
+    todays_month = int(datetime.datetime.today().strftime("%m"))
+    todays_day = int(datetime.datetime.today().strftime("%d"))
+    end_date = datetime.datetime(2019, todays_month, todays_day)
 
     # Use the Buy and Hold Strategy
     events_queue = queue.Queue()
