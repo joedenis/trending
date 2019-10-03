@@ -41,12 +41,13 @@ class BuyAndHoldStrategy(AbstractStrategy):
             self.bars += 1
 
 
-def run(config, testing, tickers, filename):
+def run(config, testing, tickers, _filename):
+
     # Backtest information
     title = ['Buy and Hold Example on %s' % tickers[0]]
-    initial_equity = 10000.0
-    start_date = datetime.datetime(2000, 1, 1)
-    end_date = datetime.datetime(2014, 1, 1)
+    initial_equity = 400000.0
+    start_date = datetime.datetime(2019, 1, 1)
+    end_date = datetime.datetime(2019, 10, 1)
 
     # Use the Buy and Hold Strategy
     events_queue = queue.Queue()
@@ -58,7 +59,7 @@ def run(config, testing, tickers, filename):
         initial_equity, start_date, end_date,
         events_queue, title=title
     )
-    results = backtest.start_trading(testing=testing)
+    results = backtest.start_trading(testing=testing, filename=_filename)
     return results
 
 
@@ -68,6 +69,6 @@ if __name__ == "__main__":
     config = settings.from_file(
         settings.DEFAULT_CONFIG_FILENAME, testing
     )
-    tickers = ["SPY"]
-    filename = None
+    tickers = ["PRAESCIRE19"]
+    filename = "/home/joe/Desktop/PRAESCIRE19.png"
     run(config, testing, tickers, filename)

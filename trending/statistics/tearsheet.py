@@ -650,6 +650,7 @@ class TearsheetStatistics(AbstractStatistics):
 
         if filename is not None:
             fig.savefig(filename, dpi=150, bbox_inches='tight')
+            print("Tearsheet saved:", filename)
 
     def get_filename(self, filename=""):
         if filename == "":
