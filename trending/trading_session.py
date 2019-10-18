@@ -22,6 +22,7 @@ class TradingSession(object):
         self, config, strategy, tickers,
         equity, start_date, end_date, events_queue,
         session_type="backtest", end_session_time=None,
+        adjusted_or_close='Close',
         price_handler=None, portfolio_handler=None,
         compliance = None,
         position_sizer=None,
@@ -43,6 +44,7 @@ class TradingSession(object):
         self.price_handler = price_handler
         self.portfolio_handler = portfolio_handler
         self.compliance = compliance
+        self.adj = adjusted_or_close
         self.execution_handler = execution_handler
         self.position_sizer = position_sizer
         self.risk_manager = risk_manager
@@ -53,6 +55,7 @@ class TradingSession(object):
         self.session_type = session_type
         self._config_session()
         self.cur_time = None
+
 
         if self.session_type == "live":
             if self.end_session_time is None:
@@ -67,7 +70,7 @@ class TradingSession(object):
             self.price_handler = YahooDailyCsvBarPriceHandler(
                 self.config.CSV_DATA_DIR, self.events_queue,
                 self.tickers, start_date=self.start_date,
-                end_date=self.end_date
+                end_date=self.end_date, calc_adj_returns=True
             )
 
         if self.position_sizer is None:
@@ -82,7 +85,8 @@ class TradingSession(object):
                 self.events_queue,
                 self.price_handler,
                 self.position_sizer,
-                self.risk_manager
+                self.risk_manager,
+                self.adj
             )
 
         if self.compliance is None:
@@ -92,6 +96,7 @@ class TradingSession(object):
             self.execution_handler = IBSimulatedExecutionHandler(
                 self.events_queue,
                 self.price_handler,
+                self.adj,
                 self.compliance
             )
 

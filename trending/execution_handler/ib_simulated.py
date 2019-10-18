@@ -15,7 +15,7 @@ class IBSimulatedExecutionHandler(AbstractExecutionHandler):
     handler.
     """
 
-    def __init__(self, events_queue, price_handler, compliance=None):
+    def __init__(self, events_queue, price_handler, adjusted_or_close='Close', compliance=None):
         """
         Initialises the handler, setting the event queue
         as well as access to local pricing.
@@ -26,6 +26,7 @@ class IBSimulatedExecutionHandler(AbstractExecutionHandler):
         self.events_queue = events_queue
         self.price_handler = price_handler
         self.compliance = compliance
+        self.adjusted_or_close = adjusted_or_close
 
     def calculate_ib_commission(self, quantity, fill_price):
         """
@@ -63,8 +64,12 @@ class IBSimulatedExecutionHandler(AbstractExecutionHandler):
                 else:
                     fill_price = bid
             else:
-                close_price = self.price_handler.get_last_close(ticker)
-                fill_price = close_price
+                if self.adjusted_or_close == 'Close':
+                    close_price = self.price_handler.get_last_close(ticker)
+                    fill_price = close_price
+                elif self.adjusted_or_close == 'adj_close':
+                    close_price = self.price_handler.get_last_adj_close(ticker)
+                    fill_price = close_price
 
             # Set a dummy exchange and calculate trade commission
             exchange = "ARCA"

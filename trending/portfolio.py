@@ -2,7 +2,7 @@ from .position import Position
 
 
 class Portfolio(object):
-    def __init__(self, price_handler, cash):
+    def __init__(self, price_handler, cash, adjusted_prices=None):
         """
         On creation, the Portfolio object contains no
         positions and all values are "reset" to the initial
@@ -19,6 +19,7 @@ class Portfolio(object):
         self.positions = {}
         self.closed_positions = []
         self.realised_pnl = 0
+        self.adj = adjusted_prices
 
     def _update_portfolio(self):
         """
@@ -33,6 +34,10 @@ class Portfolio(object):
             pt = self.positions[ticker]
             if self.price_handler.istick():
                 bid, ask = self.price_handler.get_best_bid_ask(ticker)
+            elif self.adj:
+                close_price = self.price_handler.get_last_adj_close(ticker)
+                bid = close_price
+                ask = close_price
             else:
                 close_price = self.price_handler.get_last_close(ticker)
                 bid = close_price

@@ -558,12 +558,12 @@ class TearsheetStatistics(AbstractStatistics):
         ax.text(9.5, 9.9, '{:.0%}'.format(mly_pct), fontsize=8, fontweight='bold',
                 horizontalalignment='right')
 
-        ax.text(0.5, 8.9, 'Average Winning Month %', fontsize=8)
+        ax.text(0.5, 8.9, 'Avg Winning Month %', fontsize=8)
         ax.text(9.5, 8.9, '{:.2%}'.format(mly_avg_win_pct), fontsize=8, fontweight='bold',
                 color='red' if mly_avg_win_pct < 0 else 'green',
                 horizontalalignment='right')
 
-        ax.text(0.5, 7.9, 'Average Losing Month %', fontsize=8)
+        ax.text(0.5, 7.9, 'Avg Losing Month %', fontsize=8)
         ax.text(9.5, 7.9, '{:.2%}'.format(mly_avg_loss_pct), fontsize=8, fontweight='bold',
                 color='red' if mly_avg_loss_pct < 0 else 'green',
                 horizontalalignment='right')
