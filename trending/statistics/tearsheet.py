@@ -467,6 +467,8 @@ class TearsheetStatistics(AbstractStatistics):
             avg_loss_pct = "N/A"
             max_win_pct = "N/A"
             max_loss_pct = "N/A"
+            avg_dit = "N/A"
+            max_loss_dt = "TBA"
         else:
             pos = stats['positions']
             num_trades = pos.shape[0]
@@ -477,15 +479,16 @@ class TearsheetStatistics(AbstractStatistics):
             avg_loss_pct = '{:.2%}'.format(np.mean(pos[pos["trade_pct"] <= 0]["trade_pct"]))
             max_win_pct = '{:.2%}'.format(np.max(pos["trade_pct"]))
             max_loss_pct = '{:.2%}'.format(np.min(pos["trade_pct"]))
+            avg_dit = '{:.2f}'.format(np.mean(pos.time_in_pos))
+            max_loss_dt = pos[pos["trade_pct"] == np.min(pos["trade_pct"])].timestamp_entry.values[0]
+            max_loss_dt = np.datetime_as_string(max_loss_dt)[:10]
 
         y_axis_formatter = FuncFormatter(format_perc)
         ax.yaxis.set_major_formatter(FuncFormatter(y_axis_formatter))
 
+        # TODO: Position class needs entry date
         # max_loss_dt = 'TBD'  # pos[pos["trade_pct"] == np.min(pos["trade_pct"])].entry_date.values[0]
         # avg_dit = '0.0'  # = '{:.2f}'.format(np.mean(pos.time_in_pos))
-
-        max_loss_dt = pos[pos["trade_pct"] == np.min(pos["trade_pct"])].timestamp_entry.values[0]
-        avg_dit = '{:.2f}'.format(np.mean(pos.time_in_pos))
 
         ax.text(0.5, 8.9, 'Trade Winning %', fontsize=8)
         ax.text(9.5, 8.9, win_pct_str, fontsize=8, fontweight='bold', horizontalalignment='right')
@@ -506,7 +509,7 @@ class TearsheetStatistics(AbstractStatistics):
         ax.text(9.5, 3.9, max_loss_pct, color='red', fontsize=8, fontweight='bold', horizontalalignment='right')
 
         ax.text(0.5, 2.9, 'Worst Trade Date', fontsize=8)
-        ax.text(9.5, 2.9, np.datetime_as_string(max_loss_dt)[:10], fontsize=8, fontweight='bold', horizontalalignment='right')
+        ax.text(9.5, 2.9, max_loss_dt, fontsize=8, fontweight='bold', horizontalalignment='right')
 
         ax.text(0.5, 1.9, 'Avg Days in Trade', fontsize=8)
         ax.text(9.5, 1.9, avg_dit, fontsize=8, fontweight='bold', horizontalalignment='right')
