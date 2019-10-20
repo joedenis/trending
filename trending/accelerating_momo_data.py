@@ -6,7 +6,7 @@ def main():
     sectors = ["XLB", "XLE", "XLF", "XLI", "XLK", "XLP", "XLU", "XLV", "XLY"]
     all_weather = ["SPY", "IEF", "TLT", "GLD", "DBC"]
 
-    stocks = ["BP.L", "ITV.L"]
+    stocks = ["BP.L", "ITV.L", "AZN.L", "BT-A.L", "GSK.L"]
 
     # ticker = '^GSPC'
     source = 'yahoo'

@@ -1,4 +1,5 @@
 import datetime
+import calendar
 
 from trending import settings
 
@@ -24,27 +25,35 @@ class BuyAndHoldStrategy(AbstractStrategy):
         self.ticker = ticker
         self.events_queue = events_queue
         # self.base_quantity = base_quantity
-        self.bars = 0
+        # counting bars not needed for monthyl trading
+        # self.bars = 0
         self.invested = False
+
+    def _end_of_month(self, cur_time):
+        """
+		Determine if the current day is at the end of the month.
+		"""
+        cur_day = cur_time.day
+        end_day = calendar.monthrange(cur_time.year, cur_time.month)[1]
+        return cur_day == end_day
 
     def calculate_signals(self, event):
         if (
             event.type in [EventType.BAR, EventType.TICK] and
-            event.ticker == self.ticker
+            event.ticker == self.ticker and self._end_of_month(event.time)
         ):
-            if not self.invested and self.bars == 0:
-                signal = SignalEvent(
-                    self.ticker, "BOT",
-                    # suggested_quantity=self.base_quantity
-                )
-                self.events_queue.put(signal)
-                self.invested = True
-            self.bars += 1
+            ticker = event.ticker
+            if self.invested:
+                liquidate_signal = SignalEvent(ticker, "EXIT")
+                self.events_queue.put(liquidate_signal)
+            long_signal = SignalEvent(ticker, "BOT")
+            self.events_queue.put(long_signal)
 
+            self.invested = True
 
 def run(config, testing, tickers, _filename, initial_equity):
     # Backtest information
-    title = ['Buy and Hold Example on %s' % tickers[0]]
+    title = ['Buy and Hold monthly rebalance Example on %s' % tickers[0]]
 
     start_date = datetime.datetime(2014, 1, 1)
 
@@ -57,7 +66,7 @@ def run(config, testing, tickers, _filename, initial_equity):
     strategy = BuyAndHoldStrategy(tickers[0], events_queue)
 
     ticker_weights = {
-        "AZN.L": 1
+        "GSK.L": 1
     }
     position_sizer = LiquidateRebalancePositionSizer(
         ticker_weights
@@ -82,7 +91,7 @@ if __name__ == "__main__":
     config = settings.from_file(
         settings.DEFAULT_CONFIG_FILENAME, testing
     )
-    tickers = ["AZN.L"]
-    filename = "/home/joe/Desktop/AZN.png"
+    tickers = ["GSK.L"]
+    filename = "/home/joe/Desktop/GSK.png"
     initial_equity = 22500000.0
     run(config, testing, tickers, filename, initial_equity)

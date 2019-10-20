@@ -175,6 +175,7 @@ class TearsheetStatistics(AbstractStatistics):
             df['total_sld'] = df['total_sld'].apply(x)
             df['unrealised_pnl'] = df['unrealised_pnl'].apply(x)
             df['trade_pct'] = (df['avg_sld'] / df['avg_bot'] - 1.0)
+            df['time_in_pos'] = (df['timestamp_most_recent_exit'] - df['timestamp_entry']).dt.days
             return df
 
     def _plot_equity(self, stats, ax=None, **kwargs):
@@ -480,9 +481,11 @@ class TearsheetStatistics(AbstractStatistics):
         y_axis_formatter = FuncFormatter(format_perc)
         ax.yaxis.set_major_formatter(FuncFormatter(y_axis_formatter))
 
-        # TODO: Position class needs entry date
-        max_loss_dt = 'TBD'  # pos[pos["trade_pct"] == np.min(pos["trade_pct"])].entry_date.values[0]
-        avg_dit = '0.0'  # = '{:.2f}'.format(np.mean(pos.time_in_pos))
+        # max_loss_dt = 'TBD'  # pos[pos["trade_pct"] == np.min(pos["trade_pct"])].entry_date.values[0]
+        # avg_dit = '0.0'  # = '{:.2f}'.format(np.mean(pos.time_in_pos))
+
+        max_loss_dt = pos[pos["trade_pct"] == np.min(pos["trade_pct"])].timestamp_entry.values[0]
+        avg_dit = '{:.2f}'.format(np.mean(pos.time_in_pos))
 
         ax.text(0.5, 8.9, 'Trade Winning %', fontsize=8)
         ax.text(9.5, 8.9, win_pct_str, fontsize=8, fontweight='bold', horizontalalignment='right')
@@ -503,7 +506,7 @@ class TearsheetStatistics(AbstractStatistics):
         ax.text(9.5, 3.9, max_loss_pct, color='red', fontsize=8, fontweight='bold', horizontalalignment='right')
 
         ax.text(0.5, 2.9, 'Worst Trade Date', fontsize=8)
-        ax.text(9.5, 2.9, max_loss_dt, fontsize=8, fontweight='bold', horizontalalignment='right')
+        ax.text(9.5, 2.9, np.datetime_as_string(max_loss_dt)[:10], fontsize=8, fontweight='bold', horizontalalignment='right')
 
         ax.text(0.5, 1.9, 'Avg Days in Trade', fontsize=8)
         ax.text(9.5, 1.9, avg_dit, fontsize=8, fontweight='bold', horizontalalignment='right')
