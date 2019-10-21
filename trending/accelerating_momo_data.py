@@ -14,7 +14,7 @@ def main():
     # symbol = 'SPX'
     date_end = '2019-10-17'
 
-    for instrument in stocks:
+    for instrument in all_weather:
         data_build.main(instrument, source, date_start, date_end, instrument)
 
 if __name__ == "__main__":

@@ -109,7 +109,7 @@ def run(config, testing, tickers, filename):
 		events_queue, position_sizer=position_sizer,
 		title=title, benchmark=tickers[0],
 	)
-	results = backtest.start_trading(testing=testing)
+	results = backtest.start_trading(testing=testing, filename=filename)
 	return results
 
 
@@ -120,6 +120,6 @@ if __name__ == "__main__":
 		settings.DEFAULT_CONFIG_FILENAME, testing
 	)
 	tickers = ["SPY", "IEF", "TLT", "GLD", "DBC"]
-	filename = None
-	rebalancing = run(config, testing, tickers, filename)
-	print(rebalancing['positions'])
+	filename = "/home/joe/Desktop/all_weather.png"
+	run(config, testing, tickers, filename)
+
