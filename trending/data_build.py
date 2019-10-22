@@ -110,11 +110,14 @@ def main(ticker, source, date_start, date_end, symbol):
     bars.to_csv(export_path / "data" / (symbol + ".csv"))
     # Create indicators
     # on instantiating our DataBuild class it automatically creates the indicators that we need in a pandas dataframe.
+
+    """
     infobars = DataBuild(symbol, bars)
 
     # we then take the indicators and save it to the csv
     infobars.indicators.to_csv(indicators_filepath)
 
+    """
 if __name__ == "__main__":
 
     ticker = '^GSPC'

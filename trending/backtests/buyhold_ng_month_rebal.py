@@ -50,7 +50,7 @@ class BuyAndHoldStrategy(AbstractStrategy):
         string = '1/1/' + str(year)
         days = pd.date_range(string, periods=12, freq='BM')
 
-        return  cur_time in set(days)
+        return cur_time in set(days)
 
     def _end_of_month_trading_calendar(self, cur_time):
         """
@@ -68,8 +68,8 @@ class BuyAndHoldStrategy(AbstractStrategy):
 
         cur_date_string = cur_time.strftime('%Y-%m-%d')
 
-        list = month_ends.strftime('%Y-%m-%d')
-        return  cur_date_string in set(list)
+        listy = month_ends.strftime('%Y-%m-%d')
+        return cur_date_string in set(listy)
 
     def _end_of_quarter(self, cur_time):
         """
@@ -97,9 +97,12 @@ class BuyAndHoldStrategy(AbstractStrategy):
 
             self.invested = True
 
+
 def get_yearly_trading_calendar(year, cal='LSE'):
     """
     Used to get the trading days using the LSE calendar
+    uses pandas-market-calendars
+    'NYSE', 'LSE', 'CME', 'EUREX', 'TSX'
     """
 
     lse = mcal.get_calendar(cal)
@@ -111,27 +114,27 @@ def get_yearly_trading_calendar(year, cal='LSE'):
     return daily
 
 
-def get_dict_of_trading_calendars(years):
+def get_dict_of_trading_calendars(years, cal='LSE'):
     """
 
     :param years: a list of years
     :return: tradng calendars dictionary with years as the keys
-
+    :cal: calendar
     Pass this to the backtester
     """
 
-    dict = {}
+    cal_dict = {}
     for year in years:
-        dict[year] = get_yearly_trading_calendar(year)
+        cal_dict[year] = get_yearly_trading_calendar(year, cal)
 
-    return dict
+    return cal_dict
 
 
 def run(config, testing, tickers, _filename, initial_equity):
     # Backtest information
     title = ['Buy and Hold monthly rebalance Example on %s' % tickers[0]]
 
-    year_start = 2004
+    year_start = 2017
     year_end = 2019
 
     start_date = datetime.datetime(year_start, 12, 28)
@@ -141,7 +144,7 @@ def run(config, testing, tickers, _filename, initial_equity):
     end_date = datetime.datetime(year_end, todays_month, todays_day)
 
     years = list(range(year_start, year_end + 1))
-    calendars = get_dict_of_trading_calendars(years)
+    calendars = get_dict_of_trading_calendars(years, cal='LSE')
 
     # Use the Buy and Hold Strategy
     events_queue = queue.Queue()
