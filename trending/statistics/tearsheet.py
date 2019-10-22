@@ -608,7 +608,6 @@ class TearsheetStatistics(AbstractStatistics):
                 color='red' if daily_min < 0 else 'green',
                 horizontalalignment='right')
 
-
         # ax.text(0.5, 0.9, 'Positive 12 Month Periods', fontsize=8)
         # ax.text(9.5, 0.9, num_trades, fontsize=8, fontweight='bold', horizontalalignment='right')
 
