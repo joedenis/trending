@@ -12,11 +12,11 @@ def main():
 
     # ticker = '^GSPC'
     source = 'yahoo'
-    date_start = '2014-09-16'
+    date_start = '1999-09-16'
     # symbol = 'SPX'
-    date_end = '2019-10-22'
+    date_end = '2019-10-24'
 
-    for instrument in crypto:
+    for instrument in stocks:
         data_build.main(instrument, source, date_start, date_end, instrument)
 
 if __name__ == "__main__":

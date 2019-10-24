@@ -117,9 +117,9 @@ def get_yearly_trading_calendar(year, cal='LSE'):
 def get_dict_of_trading_calendars(years, cal='LSE'):
     """
 
+    :param cal: calendar eg LSE, NYSE, EUREX
     :param years: a list of years
     :return: tradng calendars dictionary with years as the keys
-    :cal: calendar
     Pass this to the backtester
     """
 
@@ -134,7 +134,7 @@ def run(config, testing, tickers, _filename, initial_equity):
     # Backtest information
     title = ['Buy and Hold monthly rebalance Example on %s' % tickers[0]]
 
-    year_start = 2017
+    year_start = 1999
     year_end = 2019
 
     start_date = datetime.datetime(year_start, 12, 28)
