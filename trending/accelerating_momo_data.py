@@ -8,15 +8,17 @@ def main():
 
     stocks = ["BP.L", "NG.L", "AZN.L", "BT-A.L", "GSK.L"]
 
+    us_titans = ["TSLA"]
+
     crypto = ['BTC-USD', 'ETH-USD']
 
     # ticker = '^GSPC'
     source = 'yahoo'
-    date_start = '1999-09-16'
+    date_start = '2016-09-16'
     # symbol = 'SPX'
     date_end = '2019-10-24'
 
-    for instrument in stocks:
+    for instrument in us_titans:
         data_build.main(instrument, source, date_start, date_end, instrument)
 
 if __name__ == "__main__":

@@ -1,7 +1,7 @@
 import datetime
 import calendar
 import pandas_market_calendars as mcal
-
+import numpy as np
 
 import pandas as pd
 
@@ -12,11 +12,12 @@ from trending.event import SignalEvent, EventType
 from trending.position_sizer.rebalance import LiquidateRebalancePositionSizer
 
 import queue
+from collections import deque
 
 from trending.trading_session import TradingSession
+from scipy.stats import linregress
 
-
-class BuyAndHoldStrategy(AbstractStrategy):
+class ExponentialMomentum(AbstractStrategy):
     """
     A testing strategy that simply purchases (longs) an asset
     upon first receipt of the relevant bar event and
@@ -26,16 +27,25 @@ class BuyAndHoldStrategy(AbstractStrategy):
     We give it calendars to only trade when markets are open
     """
     def __init__(
-        self, ticker, events_queue, calendars
+        self, tickers, events_queue, calendars,
+            window = 90
         # base_quantity=100
     ):
-        self.ticker = ticker
+        self.tickers = tickers
         self.events_queue = events_queue
         # self.base_quantity = base_quantity
         # counting bars not needed for monthyl trading
-        # self.bars = 0
+        self.bars = 0
         self.invested = False
         self.calendars = calendars
+        self.window = window
+
+        self.tickers_invested = self._create_invested_list()
+
+        # creating the queue for each asset in tickers list
+        self.ticker_bars = {}
+        for ticker in tickers:
+            self.ticker_bars[ticker] = deque(maxlen=self.window)
 
     def _end_of_month(self, cur_time):
         """
@@ -83,19 +93,90 @@ class BuyAndHoldStrategy(AbstractStrategy):
         # [1]
         return cur_day == end_day and cur_month in quarter_months
 
+    def _create_invested_list(self):
+        """
+			Create a dictionary with each ticker as a key, with
+			a boolean value depending upon whether the ticker has
+			been "invested" yet. This is necessary to avoid sending
+			a liquidation signal on the first allocation.
+		"""
+        tickers_invested = {ticker:False for ticker in self.tickers}
+        return tickers_invested
+
+    def expo_momentum(self, prices):
+        """
+        :param prices: closing prices of the asset
+        :return: the slope coefficient from a regression multiply by R^2 (regression coef)
+        """
+        returns = np.log(prices)
+        x = np.arange(len(returns))
+        slope, _, rvalue, _, _ = linregress(x, returns)
+        return ((1 + slope) ** 252) * (rvalue ** 2)  # annualize slope and multiply by R^2
+
+
+
+
+
     def calculate_signals(self, event):
         if (
             event.type in [EventType.BAR, EventType.TICK] and
-            event.ticker == self.ticker and self._end_of_month_trading_calendar(event.time)
+            event.ticker in self.tickers
+                # and self._end_of_month_trading_calendar(event.time)
         ):
             ticker = event.ticker
-            if self.invested:
-                liquidate_signal = SignalEvent(ticker, "EXIT")
-                self.events_queue.put(liquidate_signal)
-            long_signal = SignalEvent(ticker, "BOT")
-            self.events_queue.put(long_signal)
+            # add closing prices to prices queue
+            self.ticker_bars[event.ticker].append(event.adj_close_price)
 
-            self.invested = True
+            # can only trade if all tickers have more than 90 days
+            can_trade = True
+            for ticker in self.ticker_bars:
+                if len(self.ticker_bars[ticker]) < self.window:
+                    can_trade = False
+                    if not can_trade:
+                        break
+
+            if can_trade and self._end_of_month_trading_calendar(event.time):
+
+                """
+                TODO if we can trade how to make sure we invest in the right tickers when the 
+                event system is created
+                
+                we know which assets we should be in.  So we need to control the liquidate and invest
+                signals.  Look out for not liquidating the first buys of the portfolio.
+                
+                look at our example in momo_two_stocks
+                
+                how do we timestamp individual assets coming through. guess once we have seen all the assets for a given day
+                calculate the indicator on that day.  Signal goes out to buy or sell for the next day.
+                
+                
+                """
+                # momentums = pd.DataFrame(self.tickers)
+                momenta = {}
+                for ticker in self.tickers:
+                    closing_prices = list(self.ticker_bars[ticker])
+                    momenta[ticker] = self.expo_momentum(closing_prices)
+
+                # momenta_df = pd.DataFrame(list(momenta.items), columns=['Asset', 'Momentum'])
+                # momenta_df = momenta_df.sort_values(by = 'Momentum')
+                n = 2
+                top_n = {key:momenta[key] for key in sorted(momenta, key=momenta.get, reverse=True)[:n]}
+
+                top_assets = list(top_n.keys())
+
+                print(top_assets)
+
+
+
+
+
+                if self.invested:
+                    liquidate_signal = SignalEvent(ticker, "EXIT")
+                    self.events_queue.put(liquidate_signal)
+                long_signal = SignalEvent(ticker, "BOT")
+                self.events_queue.put(long_signal)
+
+                self.invested = True
 
 
 def get_yearly_trading_calendar(year, cal='LSE'):
@@ -132,7 +213,7 @@ def get_dict_of_trading_calendars(years, cal='LSE'):
 
 def run(config, testing, tickers, _filename, initial_equity):
     # Backtest information
-    title = ['Buy and Hold monthly rebalance Example on %s' % tickers[0]]
+    title = ['Exponential momentum on basket %s' % tickers]
 
     year_start = 2016
     year_end = 2019
@@ -148,11 +229,21 @@ def run(config, testing, tickers, _filename, initial_equity):
 
     # Use the Buy and Hold Strategy
     events_queue = queue.Queue()
-    strategy = BuyAndHoldStrategy(tickers[0], events_queue, calendars)
+    strategy = ExponentialMomentum(tickers, events_queue, calendars)
 
-    ticker_weights = {
-        "TSLA": 1
-    }
+
+    allocation = 1 / len(tickers)
+    ticker_weights = {}
+    for ticker in tickers:
+        ticker_weights[ticker] = allocation
+
+    # ticker_weights = {
+    #     "BP.L": 1,
+    #     "GSK.L": 1,
+    #     "ITV.L": 1,
+    #     "NG.L": 1
+    # }
+
     position_sizer = LiquidateRebalancePositionSizer(
         ticker_weights
     )
@@ -176,7 +267,7 @@ if __name__ == "__main__":
     config = settings.from_file(
         settings.DEFAULT_CONFIG_FILENAME, testing
     )
-    tickers = ["TSLA"]
-    filename = "/home/joe/Desktop/TSLA.png"
+    tickers = ["BP.L", "GSK.L", "ITV.L", "NG.L"]
+    filename = "/home/joe/Desktop/expo_momo.png"
     initial_equity = 22500000.0
     run(config, testing, tickers, filename, initial_equity)
