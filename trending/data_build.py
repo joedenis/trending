@@ -105,8 +105,10 @@ def main(ticker, source, date_start, date_end, symbol):
     # bars = quandl.get('YAHOO/INDEX_GSPC', authtoken='yhwsDSnRYS6nsJN7kGAb', trim_start=date_start,
     #                  trim_end=date_end)
 
+    bars = bars[['Open', 'High', 'Low', 'Close', 'Volume', 'Adj Close']]
     print(bars.head())
     # create a csv for our own amusement
+
     bars.to_csv(export_path / "data" / (symbol + ".csv"))
     # Create indicators
     # on instantiating our DataBuild class it automatically creates the indicators that we need in a pandas dataframe.

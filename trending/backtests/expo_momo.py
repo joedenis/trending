@@ -28,7 +28,7 @@ class ExponentialMomentum(AbstractStrategy):
     """
     def __init__(
         self, tickers, events_queue, calendars,
-            window = 90
+            window = 90, atr_period=20
         # base_quantity=100
     ):
         self.tickers = tickers
@@ -39,13 +39,31 @@ class ExponentialMomentum(AbstractStrategy):
         self.invested = False
         self.calendars = calendars
         self.window = window
+        self.atr_period = atr_period
 
         self.tickers_invested = self._create_invested_list()
 
-        # creating the queue for each asset in tickers list
+        # creating the queues for each asset in tickers list
+        #  queue for closing prices
         self.ticker_bars = {}
+        # queue for storing true range
+        self.true_range = {}
+        # dictionary to calculate the true range
+        self.high_lows = {}
+        # dictionary to store pd Series of average true range
+        self.atr = {}
+
         for ticker in tickers:
             self.ticker_bars[ticker] = deque(maxlen=self.window)
+            self.high_lows[ticker] = dict.fromkeys(['today_high', 'today_low', 'yes_close'])
+            self.true_range[ticker] = deque(maxlen=100)
+            # average true range will be stored here when we have a series
+            self.atr[ticker] = None
+
+    #     creating high lows for asset calculations
+    #     self.high_lows = {}
+    #     for ticker in tickers:
+    #         self.high_lows[ticker] = dict.fromkeys(['today_high', 'today_low', 'yes_close'])
 
     def _end_of_month(self, cur_time):
         """
@@ -126,6 +144,34 @@ class ExponentialMomentum(AbstractStrategy):
             ticker = event.ticker
             # add closing prices to prices queue
             self.ticker_bars[event.ticker].append(event.adj_close_price)
+
+            # add todays prices prices and yesterdays prices
+            # first we move the old price
+            # self.high_lows[event.ticker]['yes_high'] = self.high_lows[event.ticker]['today_high']
+            # self.high_lows[event.ticker]['yes_close'] = self.high_lows[event.ticker]['today_low']
+            self.high_lows[event.ticker]['today_high'] = event.high_price
+            self.high_lows[event.ticker]['today_low'] = event.low_price
+
+            todays_high = self.high_lows[event.ticker]['today_high']
+            todays_low = self.high_lows[event.ticker]['today_low']
+
+            if len(self.ticker_bars[event.ticker]) > 1:
+                yesterdays_close = self.ticker_bars[event.ticker][-2]
+
+                true_range = np.max([todays_high, yesterdays_close]) - np.min([todays_low, yesterdays_close])
+                self.true_range[event.ticker].append(true_range)
+
+                if len(self.true_range[event.ticker]) >= 20:
+                    queue_of_tr = pd.Series(self.true_range[event.ticker])
+                    atr_series = queue_of_tr.ewm(span=20, min_periods=self.atr_period).mean()
+                    self.atr[ticker] = atr_series
+
+            #         TODO we have the average true range working for a default of 20 days. This value is a large integer to avoid precision
+            # TODO translate the ATR into a portfolio weighting!
+            #
+
+
+
 
             # can only trade if all tickers have more than 90 days
             can_trade = True
