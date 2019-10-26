@@ -9,7 +9,7 @@ from trending import settings
 
 from trending.strategy.base import AbstractStrategy
 from trending.event import SignalEvent, EventType
-from trending.position_sizer.rebalance import LiquidateRebalancePositionSizer
+from trending.position_sizer.risk_parity_atr import RiskParityATRPositionSizer
 
 import queue
 from collections import deque
@@ -44,8 +44,10 @@ class ExponentialMomentum(AbstractStrategy):
         self.tickers_invested = self._create_invested_list()
 
         # creating the queues for each asset in tickers list
-        #  queue for closing prices
+        #  queue for closing prices adjusted
         self.ticker_bars = {}
+        # queue for unadjusted prices
+        self.ticker_bars_unadj = {}
         # queue for storing true range
         self.true_range = {}
         # dictionary to calculate the true range
@@ -55,6 +57,7 @@ class ExponentialMomentum(AbstractStrategy):
 
         for ticker in tickers:
             self.ticker_bars[ticker] = deque(maxlen=self.window)
+            self.ticker_bars_unadj[ticker] = deque(maxlen=self.window)
             self.high_lows[ticker] = dict.fromkeys(['today_high', 'today_low', 'yes_close'])
             self.true_range[ticker] = deque(maxlen=100)
             # average true range will be stored here when we have a series
@@ -144,6 +147,7 @@ class ExponentialMomentum(AbstractStrategy):
             ticker = event.ticker
             # add closing prices to prices queue
             self.ticker_bars[event.ticker].append(event.adj_close_price)
+            self.ticker_bars_unadj[event.ticker].append((event.close_price))
 
             # add todays prices prices and yesterdays prices
             # first we move the old price
@@ -155,8 +159,8 @@ class ExponentialMomentum(AbstractStrategy):
             todays_high = self.high_lows[event.ticker]['today_high']
             todays_low = self.high_lows[event.ticker]['today_low']
 
-            if len(self.ticker_bars[event.ticker]) > 1:
-                yesterdays_close = self.ticker_bars[event.ticker][-2]
+            if len(self.ticker_bars_unadj[event.ticker]) > 1:
+                yesterdays_close = self.ticker_bars_unadj[event.ticker][-2]
 
                 true_range = np.max([todays_high, yesterdays_close]) - np.min([todays_low, yesterdays_close])
                 self.true_range[event.ticker].append(true_range)
@@ -205,7 +209,7 @@ class ExponentialMomentum(AbstractStrategy):
 
                 # momenta_df = pd.DataFrame(list(momenta.items), columns=['Asset', 'Momentum'])
                 # momenta_df = momenta_df.sort_values(by = 'Momentum')
-                n = 2
+                n = 4
                 top_n = {key:momenta[key] for key in sorted(momenta, key=momenta.get, reverse=True)[:n]}
 
                 top_assets = list(top_n.keys())
@@ -213,17 +217,16 @@ class ExponentialMomentum(AbstractStrategy):
                 print(top_assets)
 
 
+                """
+                if we have seen all the stocks.
+                Then we want to buy the ones in our top list.
+                first we need to see how much money we have in the portfolio
+                """
+                size = int(self.atr[ticker].iloc[-1])
 
-
-
-                if self.invested:
-                    liquidate_signal = SignalEvent(ticker, "EXIT")
-                    self.events_queue.put(liquidate_signal)
-                long_signal = SignalEvent(ticker, "BOT")
+                long_signal = SignalEvent(ticker, "BOT", size)
+                # we need a suggested quantity in the SignalEvent above,  that is done with the risk system
                 self.events_queue.put(long_signal)
-
-                self.invested = True
-
 
 def get_yearly_trading_calendar(year, cal='LSE'):
     """
@@ -278,10 +281,11 @@ def run(config, testing, tickers, _filename, initial_equity):
     strategy = ExponentialMomentum(tickers, events_queue, calendars)
 
 
-    allocation = 1 / len(tickers)
+    risk_per_stock = 0.02
+
     ticker_weights = {}
     for ticker in tickers:
-        ticker_weights[ticker] = allocation
+        ticker_weights[ticker] = risk_per_stock
 
     # ticker_weights = {
     #     "BP.L": 1,
@@ -290,7 +294,7 @@ def run(config, testing, tickers, _filename, initial_equity):
     #     "NG.L": 1
     # }
 
-    position_sizer = LiquidateRebalancePositionSizer(
+    position_sizer = RiskParityATRPositionSizer(
         ticker_weights
     )
 
@@ -313,7 +317,10 @@ if __name__ == "__main__":
     config = settings.from_file(
         settings.DEFAULT_CONFIG_FILENAME, testing
     )
-    tickers = ["BP.L", "GSK.L", "ITV.L", "NG.L"]
+    tickers = ["BP.L"]
+
+    # "GSK.L", "ITV.L", "NG.L"]
+
     filename = "/home/joe/Desktop/expo_momo.png"
-    initial_equity = 22500000.0
+    initial_equity = 100000.0
     run(config, testing, tickers, filename, initial_equity)
