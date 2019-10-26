@@ -44,16 +44,16 @@ class RiskParityATRPositionSizer(AbstractPositionSizer):
 			# Determine total portfolio value, work out dollar weight
 			# and finally determine integer quantity of shares to purchase
 			price = portfolio.price_handler.tickers[ticker]["adj_close"]
-			price_unadjusted = portfolio.price_handler.tickers[ticker]["close"]
+			# price_unadjusted = portfolio.price_handler.tickers[ticker]["close"]
 
 			# test = initial_order.quantity
-			atr_for_adjusted = int((initial_order.quantity / price_unadjusted) * price)
+			# atr_for_adjusted = int((initial_order.quantity / price_unadjusted) * price)
 
 
 			equity = PriceParser.display(portfolio.equity)
 			# atr_base_unit = PriceParser.display(initial_order.quantity)
 
-			atr_for_adjusted = PriceParser.display(atr_for_adjusted)
+			atr_for_adjusted = PriceParser.display(initial_order.quantity)
 
 			quantity_atr_adjusted = int(floor((equity * weight) / atr_for_adjusted))
 

@@ -9,6 +9,7 @@ from trending import settings
 
 from trending.strategy.base import AbstractStrategy
 from trending.event import SignalEvent, EventType
+
 from trending.position_sizer.risk_parity_atr import RiskParityATRPositionSizer
 
 import queue
@@ -153,14 +154,18 @@ class ExponentialMomentum(AbstractStrategy):
             # first we move the old price
             # self.high_lows[event.ticker]['yes_high'] = self.high_lows[event.ticker]['today_high']
             # self.high_lows[event.ticker]['yes_close'] = self.high_lows[event.ticker]['today_low']
-            self.high_lows[event.ticker]['today_high'] = event.high_price
-            self.high_lows[event.ticker]['today_low'] = event.low_price
+            # today_high = event.high_price
+            # today_high =
+
+
+            self.high_lows[event.ticker]['today_high'] = int(event.high_price * event.adj_close_price / event.close_price)
+            self.high_lows[event.ticker]['today_low'] = int(event.low_price * event.adj_close_price / event.close_price)
 
             todays_high = self.high_lows[event.ticker]['today_high']
             todays_low = self.high_lows[event.ticker]['today_low']
 
             if len(self.ticker_bars_unadj[event.ticker]) > 1:
-                yesterdays_close = self.ticker_bars_unadj[event.ticker][-2]
+                yesterdays_close = self.ticker_bars[event.ticker][-2]
 
                 true_range = np.max([todays_high, yesterdays_close]) - np.min([todays_low, yesterdays_close])
                 self.true_range[event.ticker].append(true_range)
@@ -214,7 +219,8 @@ class ExponentialMomentum(AbstractStrategy):
 
                 top_assets = list(top_n.keys())
 
-                print(top_assets)
+
+                print(top_assets[0:int(n/2) - 1])
 
 
                 """
@@ -317,9 +323,7 @@ if __name__ == "__main__":
     config = settings.from_file(
         settings.DEFAULT_CONFIG_FILENAME, testing
     )
-    tickers = ["BP.L"]
-
-    # "GSK.L", "ITV.L", "NG.L"]
+    tickers = ["BP.L", "GSK.L", "ITV.L", "NG.L"]
 
     filename = "/home/joe/Desktop/expo_momo.png"
     initial_equity = 100000.0
