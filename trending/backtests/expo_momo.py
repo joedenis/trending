@@ -1,5 +1,6 @@
 # TODO rebalance positions every second wednesday
 # todo rebalance portfolio every wednesday
+# TODO currently we are trading on the same day that the indicators are calculated! Could move this to trade the nxt day
 
 
 import datetime
@@ -58,24 +59,26 @@ class ExponentialMomentum(AbstractStrategy):
         self.latest_prices = np.full(len(self.tickers), -1.0)
 
 
+
         # index 200dma calculation:
         self.index_dma_window = 200
         self.index_prices = deque(maxlen=self.index_dma_window)
         self.index_dma = False
 
         # TODO do we need a invested array
+        self.invested = np.zeros(len(self.tickers), dtype=bool)
 
         # self.base_quantity = base_quantity
         # counting bars not needed for monthyl trading
         self.bars = 0
-        self.invested = False
+
         self.calendars = calendars
         self.window = window
         self.sma_days_for_stocks = 100
 
         self.atr_period = atr_period
 
-        self.tickers_invested = self._create_invested_list()
+        # self.tickers_invested = self._create_invested_list()
 
         # creating the queues for each asset in tickers list
         #  queue for closing prices adjusted
@@ -268,6 +271,40 @@ class ExponentialMomentum(AbstractStrategy):
             #     last = just_80[79]
 
             """
+            Do any stocks we own need to be sold?
+            """
+            idxs = [i for i, x in enumerate(self.invested) if x]
+
+            if len(idxs) > 0:
+                print(idxs)
+
+            for x in idxs:
+                stock = self.tickers[x]
+                if event.ticker == stock:
+                    """
+                    check if we need to sell this
+                    """
+                    """
+                    if stock not in top assets ---> SELL
+                    if stock is below 100DMA --> SELL
+                    if gap over 15% --> SELL
+                    
+                    we need to update the tables every wednesday.  Either we keep the table as part of a class.
+                    Or for every tick coming in we calculate and then trade.
+                    
+                    """
+
+            """
+            rebalance if its a second wednesday 
+            what is the target size and what is the currents size of the position.
+            if the difference is too much rebalance 
+            
+            
+            """
+
+
+
+            """
             Has the stock had a 15% move in the last 100 days if it has we cant buy or if todays price 
             is below 100DMA
             """
@@ -345,6 +382,9 @@ class ExponentialMomentum(AbstractStrategy):
 
                     long_signal = SignalEvent(ticker, "BOT", size)
                     self.events_queue.put(long_signal)
+
+                    ix = self.tickers.index(ticker)
+                    self.invested[ix] = True
 
 
 def get_yearly_trading_calendar(year, cal='LSE'):

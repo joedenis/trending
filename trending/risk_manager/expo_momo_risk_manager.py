@@ -5,7 +5,8 @@ from trending.event import OrderEvent
 class ExpoMomoRiskManager(AbstractRiskManager):
 	"""
 	an order can only go through if we have cash in the account to buy
-
+	orders with 0 quantity are not executed. (this happens when we checked for a rebalance but the rebalance threshold
+	was not met.
 	"""
 	def __init__(self, initial_equity):
 		self.current_cash = initial_equity
@@ -18,7 +19,9 @@ class ExpoMomoRiskManager(AbstractRiskManager):
 
 		proposed_cost = price * quantity
 
-		if proposed_cost < self.current_cash:
+		if quantity == 0:
+			return []
+		elif proposed_cost < self.current_cash:
 			order_event = OrderEvent(
 				ticker,
 				sized_order.action,

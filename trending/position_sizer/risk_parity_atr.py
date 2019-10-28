@@ -24,9 +24,8 @@ class RiskParityATRPositionSizer(AbstractPositionSizer):
 
 	def size_order(self, portfolio, initial_order):
 		"""
-		Size the order to reflect the dollar-weighting of the
-		current equity account size based on pre-specified
-		ticker weights.
+		if the order is to EXIT we exit
+		otherwise if we already have a position, we look to rebalance
 		"""
 		ticker = initial_order.ticker
 		if initial_order.action == "EXIT":
@@ -38,8 +37,39 @@ class RiskParityATRPositionSizer(AbstractPositionSizer):
 			else:
 				initial_order.action = "BOT"
 				initial_order.quantity = cur_quantity
-		else:
+		elif portfolio.positions[ticker].quantity is not None and portfolio.positions[ticker].quantity > 0:
+			"""
+						rebalance if we already have a position
+			"""
+			weight = self.ticker_weights[ticker]
+			# Determine total portfolio value, work out dollar weight
+			# and finally determine integer quantity of shares to purchase
+			price = portfolio.price_handler.tickers[ticker]["adj_close"]
+			# price_unadjusted = portfolio.price_handler.tickers[ticker]["close"]
 
+			# test = initial_order.quantity
+			# atr_for_adjusted = int((initial_order.quantity / price_unadjusted) * price)
+
+			equity = PriceParser.display(portfolio.equity)
+			current_cash = PriceParser.display(portfolio.cur_cash)
+			print("current cash is", current_cash)
+			# atr_base_unit = PriceParser.display(initial_order.quantity)
+
+			atr_for_adjusted = PriceParser.display(initial_order.quantity)
+
+			quantity_atr_adjusted = int(floor((equity * weight) / atr_for_adjusted))
+
+			current_position = portfolio.positions[ticker].quantity
+
+			percentage_difference = (current_position - quantity_atr_adjusted) / quantity_atr_adjusted
+
+			# if the position weights have changed by over 10 percent we adjust the portfolio.
+			if abs(percentage_difference) > 0.1:
+				initial_order.quantity = quantity_atr_adjusted
+			else:
+				initial_order.quantity = 0
+
+		else:
 			weight = self.ticker_weights[ticker]
 			# Determine total portfolio value, work out dollar weight
 			# and finally determine integer quantity of shares to purchase
