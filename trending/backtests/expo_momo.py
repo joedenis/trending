@@ -350,11 +350,29 @@ def run(config, testing, tickers, _filename, initial_equity):
     todays_day = int(datetime.datetime.today().strftime("%d"))
     end_date = datetime.datetime(year_end, todays_month, todays_day)
 
+    csv_dir = config.CSV_DATA_DIR
+    adjusted_or_close = 'adj_close'
+
+    events_queue = queue.Queue()
+
+    price_handler = YahooDailyCsvBarPriceHandler(
+        csv_dir, events_queue, tickers,
+        start_date=start_date, end_date=end_date,
+        calc_adj_returns=True
+    )
+
+
+
+
+
     years = list(range(year_start, year_end + 1))
     calendars = get_dict_of_trading_calendars(years, cal='LSE')
 
+
+
+
+
     # Use the Buy and Hold Strategy
-    events_queue = queue.Queue()
     strategy = ExponentialMomentum(tickers, events_queue, calendars)
 
 
@@ -378,14 +396,7 @@ def run(config, testing, tickers, _filename, initial_equity):
     # risk_manager = ExampleRiskManager()
     risk_manager = ExpoMomoRiskManager(PriceParser.parse(initial_equity))
 
-    csv_dir = config.CSV_DATA_DIR
-    adjusted_or_close = 'adj_close'
 
-    price_handler = YahooDailyCsvBarPriceHandler(
-        csv_dir, events_queue, tickers,
-        start_date=start_date, end_date=end_date,
-        calc_adj_returns=True
-    )
 
     portfolio_handler = PortfolioHandler(
         PriceParser.parse(initial_equity),
@@ -403,7 +414,8 @@ def run(config, testing, tickers, _filename, initial_equity):
         events_queue, title=title,
         adjusted_or_close=adjusted_or_close,
         position_sizer=position_sizer,
-        portfolio_handler=portfolio_handler
+        portfolio_handler=portfolio_handler,
+        price_handler=price_handler
     )
 
     results = backtest.start_trading(testing=testing, filename=_filename)
