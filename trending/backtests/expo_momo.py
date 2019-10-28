@@ -12,6 +12,13 @@ from trending.event import SignalEvent, EventType
 
 from trending.position_sizer.risk_parity_atr import RiskParityATRPositionSizer
 
+from trending.price_parser import PriceParser
+
+from trending.risk_manager.example import ExampleRiskManager
+from trending.risk_manager.expo_momo_risk_manager import ExpoMomoRiskManager
+from trending.portfolio_handler import PortfolioHandler
+from trending.price_handler.yahoo_daily_csv_bar import YahooDailyCsvBarPriceHandler
+
 import queue
 from collections import deque
 
@@ -34,6 +41,17 @@ class ExponentialMomentum(AbstractStrategy):
     ):
         self.tickers = tickers
         self.events_queue = events_queue
+        """
+        keep track of the prices we have seen for a given day
+        
+        
+        """
+
+        self.time = None
+        self.latest_prices = np.full(len(self.tickers), -1)
+
+        # TODO do we need a invested array
+
         # self.base_quantity = base_quantity
         # counting bars not needed for monthyl trading
         self.bars = 0
@@ -68,6 +86,39 @@ class ExponentialMomentum(AbstractStrategy):
     #     self.high_lows = {}
     #     for ticker in tickers:
     #         self.high_lows[ticker] = dict.fromkeys(['today_high', 'today_low', 'yes_close'])
+
+    def _set_correct_time_and_price(self, event):
+        """
+        Sets the correct price and event time for prices
+        that arrive out of order in the events queue.
+        """
+        # Set the first instance of time
+        if self.time is None:
+            self.time = event.time
+
+        # Set the correct latest prices depending upon
+        # order of arrival of market bar event
+        price = event.adj_close_price / PriceParser.PRICE_MULTIPLIER
+        if event.time == self.time:
+            index = self.tickers.index(event.ticker)
+            self.latest_prices[index] = price
+
+            # if event.ticker == self.tickers[0]:
+            #     self.latest_prices[0] = price
+            # else:
+            #     self.latest_prices[1] = price
+        else:
+            self.time = event.time
+            # self.days += 1
+            self.latest_prices = np.full(len(self.tickers), -1)
+            index = self.tickers.index(event.ticker)
+            self.latest_prices[index] = price
+
+            # if event.ticker == self.tickers[0]:
+            #     self.latest_prices[0] = price
+            # else:
+            #     self.latest_prices[1] = price
+
 
     def _end_of_month(self, cur_time):
         """
@@ -145,6 +196,8 @@ class ExponentialMomentum(AbstractStrategy):
             event.ticker in self.tickers
                 # and self._end_of_month_trading_calendar(event.time)
         ):
+            self._set_correct_time_and_price(event)
+
             ticker = event.ticker
             # add closing prices to prices queue
             self.ticker_bars[event.ticker].append(event.adj_close_price)
@@ -189,8 +242,9 @@ class ExponentialMomentum(AbstractStrategy):
                     can_trade = False
                     if not can_trade:
                         break
+            #  only trade if end of month and we have seen all price observations for that day
 
-            if can_trade and self._end_of_month_trading_calendar(event.time):
+            if can_trade and self._end_of_month_trading_calendar(event.time) and all(self.latest_prices > -1.0):
 
                 """
                 TODO if we can trade how to make sure we invest in the right tickers when the 
@@ -228,11 +282,24 @@ class ExponentialMomentum(AbstractStrategy):
                 Then we want to buy the ones in our top list.
                 first we need to see how much money we have in the portfolio
                 """
-                size = int(self.atr[ticker].iloc[-1])
+                # size = int(self.atr[ticker].iloc[-1])
+                #
+                # long_signal = SignalEvent(ticker, "BOT", size)
+                # # we need a suggested quantity in the SignalEvent above,  that is done with the risk system
+                # self.events_queue.put(long_signal)
 
-                long_signal = SignalEvent(ticker, "BOT", size)
-                # we need a suggested quantity in the SignalEvent above,  that is done with the risk system
-                self.events_queue.put(long_signal)
+                """
+                what about iterating through the assets we need to buy and places signals to buy
+                """
+
+                for ticker in top_assets:
+                    size = int(self.atr[ticker].iloc[-1])
+
+                    long_signal = SignalEvent(ticker, "BOT", size)
+                    self.events_queue.put(long_signal)
+
+
+
 
 def get_yearly_trading_calendar(year, cal='LSE'):
     """
@@ -287,7 +354,7 @@ def run(config, testing, tickers, _filename, initial_equity):
     strategy = ExponentialMomentum(tickers, events_queue, calendars)
 
 
-    risk_per_stock = 0.02
+    risk_per_stock = 0.001
 
     ticker_weights = {}
     for ticker in tickers:
@@ -304,13 +371,35 @@ def run(config, testing, tickers, _filename, initial_equity):
         ticker_weights
     )
 
+    # risk_manager = ExampleRiskManager()
+    risk_manager = ExpoMomoRiskManager()
+
+    csv_dir = config.CSV_DATA_DIR
+    adjusted_or_close = 'adj_close'
+
+    price_handler = YahooDailyCsvBarPriceHandler(
+        csv_dir, events_queue, tickers,
+        start_date=start_date, end_date=end_date,
+        calc_adj_returns=True
+    )
+
+    portfolio_handler = PortfolioHandler(
+        PriceParser.parse(initial_equity),
+        events_queue,
+        price_handler,
+        position_sizer,
+        risk_manager,
+        adjusted_or_close
+    )
+
     # Set up the backtest
     backtest = TradingSession(
         config, strategy, tickers,
         initial_equity, start_date, end_date,
         events_queue, title=title,
-        adjusted_or_close='adj_close',
-        position_sizer=position_sizer
+        adjusted_or_close=adjusted_or_close,
+        position_sizer=position_sizer,
+        portfolio_handler=portfolio_handler
     )
 
     results = backtest.start_trading(testing=testing, filename=_filename)

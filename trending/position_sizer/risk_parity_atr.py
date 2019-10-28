@@ -51,6 +51,8 @@ class RiskParityATRPositionSizer(AbstractPositionSizer):
 
 
 			equity = PriceParser.display(portfolio.equity)
+			current_cash = PriceParser.display(portfolio.cur_cash)
+			print("current cash is", current_cash)
 			# atr_base_unit = PriceParser.display(initial_order.quantity)
 
 			atr_for_adjusted = PriceParser.display(initial_order.quantity)
