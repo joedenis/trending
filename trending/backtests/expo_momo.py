@@ -1,5 +1,5 @@
-# TODO we have the ranking working and just going through the rankings at the end of the month and buying if we have cash from a risk manager
-# todo but the portfolio is not updating? The tearsheet is incorrect --- needs looking into!
+# TODO rebalance positions every second wednesday
+# todo rebalance portfolio every wednesday
 
 
 import datetime
@@ -26,7 +26,6 @@ from trending.price_handler.yahoo_daily_csv_bar import YahooDailyCsvBarPriceHand
 import queue
 from collections import deque
 import itertools
-
 
 from trending.trading_session import TradingSession
 from scipy.stats import linregress
