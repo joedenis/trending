@@ -52,7 +52,7 @@ class ExponentialMomentum(AbstractStrategy):
         """
 
         self.time = None
-        self.latest_prices = np.full(len(self.tickers), -1)
+        self.latest_prices = np.full(len(self.tickers), -1.0)
 
         # TODO do we need a invested array
 
@@ -114,7 +114,7 @@ class ExponentialMomentum(AbstractStrategy):
         else:
             self.time = event.time
             # self.days += 1
-            self.latest_prices = np.full(len(self.tickers), -1)
+            self.latest_prices = np.full(len(self.tickers), -1.0)
             index = self.tickers.index(event.ticker)
             self.latest_prices[index] = price
 
@@ -272,13 +272,13 @@ class ExponentialMomentum(AbstractStrategy):
 
                 # momenta_df = pd.DataFrame(list(momenta.items), columns=['Asset', 'Momentum'])
                 # momenta_df = momenta_df.sort_values(by = 'Momentum')
-                n = 4
+                n = 2
                 top_n = {key:momenta[key] for key in sorted(momenta, key=momenta.get, reverse=True)[:n]}
 
                 top_assets = list(top_n.keys())
 
 
-                print(top_assets[0:int(n/2) - 1])
+                # print(top_assets[0:int(n/2) - 1])
 
 
                 """
@@ -376,7 +376,7 @@ def run(config, testing, tickers, _filename, initial_equity):
     )
 
     # risk_manager = ExampleRiskManager()
-    risk_manager = ExpoMomoRiskManager()
+    risk_manager = ExpoMomoRiskManager(PriceParser.parse(initial_equity))
 
     csv_dir = config.CSV_DATA_DIR
     adjusted_or_close = 'adj_close'
