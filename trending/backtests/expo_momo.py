@@ -32,12 +32,12 @@ from scipy.stats import linregress
 
 class ExponentialMomentum(AbstractStrategy):
     """
-    A testing strategy that simply purchases (longs) an asset
-    upon first receipt of the relevant bar event and
-    then holds until the completion of a backtest.
+    Uses an exponential momentum * r^2 to rank assets, 90 days default.
+    Invests in the highest ranking assets if the index is above the 200dma and the asset is above 100DMA and no
+    large gap of 15% in last 100 days.
+    stocks are sold if they move out of the ranking or if below the 100DMA or if it moved over 15%
 
-    We use a monthly rebalance.
-    We give it calendars to only trade when markets are open
+    positions are adjusted for risk using atr (average true range) 20 day
     """
     def __init__(
         self, tickers, events_queue, calendars,
@@ -50,7 +50,6 @@ class ExponentialMomentum(AbstractStrategy):
         """
         keep track of the prices we have seen for a given day
         """
-
         self.time = None
         self.latest_prices = np.full(len(self.tickers), -1.0)
 
@@ -59,11 +58,8 @@ class ExponentialMomentum(AbstractStrategy):
         self.index_prices = deque(maxlen=self.index_dma_window)
         self.index_dma = False
 
-        # TODO do we need a invested array
-        # self.invested = np.zeros(len(self.tickers), dtype=bool)
         self.tickers_invested = self._create_invested_list()
 
-        # self.base_quantity = base_quantity
         # counting bars not needed for monthyl trading
         self.bars = 0
 
@@ -93,10 +89,6 @@ class ExponentialMomentum(AbstractStrategy):
             # average true range will be stored here when we have a series
             self.atr[ticker] = None
 
-    #     creating high lows for asset calculations
-    #     self.high_lows = {}
-    #     for ticker in tickers:
-    #         self.high_lows[ticker] = dict.fromkeys(['today_high', 'today_low', 'yes_close'])
 
     def _set_correct_time_and_price(self, event):
         """
@@ -426,7 +418,7 @@ def run(config, testing, tickers, _filename, initial_equity):
     # Backtest information
     title = ['Exponential momentum on basket %s' % tickers]
 
-    year_start = 2013
+    year_start = 2000
     year_end = 2019
 
     start_date = datetime.datetime(year_start, 12, 28)
@@ -452,7 +444,7 @@ def run(config, testing, tickers, _filename, initial_equity):
     # Use the Buy and Hold Strategy
     strategy = ExponentialMomentum(tickers, events_queue, calendars)
 
-    risk_per_stock = 0.001
+    risk_per_stock = 0.002
 
     ticker_weights = {}
     for ticker in tickers:
