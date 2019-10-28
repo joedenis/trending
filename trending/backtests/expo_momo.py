@@ -204,6 +204,42 @@ class ExponentialMomentum(AbstractStrategy):
         slope, _, rvalue, _, _ = linregress(x, returns)
         return ((1 + slope) ** 252) * (rvalue ** 2)  # annualize slope and multiply by R^2
 
+    def below_100_dma(self, price, ticker):
+        """
+        used for exiting risky assets
+        returns whether the asset is below the 100dma
+        :param price: current price of the asset from the event.
+        :param ticker:
+        :return: bool
+        """
+        all_days = list(itertools.islice(self.ticker_bars[ticker], 0, len(self.ticker_bars[ticker])))
+        all_days = np.asarray(all_days, dtype=np.float32)
+
+        hundred_day_sma = np.mean(all_days)
+
+        if price < hundred_day_sma:
+            return True
+        else:
+            return False
+
+    def move_greater_than_15(self, ticker):
+        """
+        used to exit risky assets
+        returns whether there has been a move greater than 15% in the last 100 bars
+        :param ticker:
+        :return:
+        """
+        all_days = list(itertools.islice(self.ticker_bars[ticker], 0, len(self.ticker_bars[ticker])))
+        all_days = np.asarray(all_days, dtype=np.float32)
+
+        percentage_moves = np.diff(all_days) / all_days[1:] * 100
+        percentage_moves = abs(percentage_moves)
+        max_move = np.max(percentage_moves)
+
+        if  max_move > 15.0:
+            return True
+        else:
+            return False
 
     def calculate_signals(self, event):
         if (
@@ -299,7 +335,9 @@ class ExponentialMomentum(AbstractStrategy):
             what is the target size and what is the currents size of the position.
             if the difference is too much rebalance 
             
-            
+            go through all the assets with booleans. And then place orders to buy.  The position sizer will see its a rebalance
+            then 
+        
             """
 
 

@@ -65,7 +65,11 @@ class RiskParityATRPositionSizer(AbstractPositionSizer):
 
 			# if the position weights have changed by over 10 percent we adjust the portfolio.
 			if abs(percentage_difference) > 0.1:
-				initial_order.quantity = quantity_atr_adjusted
+				if current_position > quantity_atr_adjusted:
+					initial_order.action = "SLD"
+					initial_order.quantity = current_position - quantity_atr_adjusted
+				else:
+					initial_order.quantity = quantity_atr_adjusted - current_position
 			else:
 				initial_order.quantity = 0
 
