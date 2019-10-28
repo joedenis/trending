@@ -269,30 +269,31 @@ class ExponentialMomentum(AbstractStrategy):
             #     last = just_80[79]
 
             """
-            Has the stock had a 15% move in the last 100 days if it has we cant buy
+            Has the stock had a 15% move in the last 100 days if it has we cant buy or if todays price 
+            is below 100DMA
             """
 
             if can_trade:
                 all_days =list(itertools.islice(self.ticker_bars[ticker], 0, len(self.ticker_bars[ticker])))
                 all_days = np.asarray(all_days, dtype=np.float32)
 
+                hundred_day_sma = np.mean(all_days)
+
                 # difference_array = np.diff(all_days)
 
                 percentage_moves = np.diff(all_days) / all_days[1:] * 100
                 percentage_moves = abs(percentage_moves)
                 max_move = np.max(percentage_moves)
-                if max_move > 15.0:
-                    can_trade = False
 
+                if self.ticker_bars[event.ticker][-1] < hundred_day_sma or max_move > 15.0:
+                    can_trade = False
 
             if self.index_dma and can_trade and \
                     self._end_of_month_trading_calendar(event.time) and \
                     all(self.latest_prices > -1.0):
 
                 """
-                TODO if we can trade how to make sure we invest in the right tickers when the 
-                event system is created
-                
+                TODO                 
                 we know which assets we should be in.  So we need to control the liquidate and invest
                 signals.  Look out for not liquidating the first buys of the portfolio.
                 
@@ -347,8 +348,6 @@ class ExponentialMomentum(AbstractStrategy):
                     self.events_queue.put(long_signal)
 
 
-
-
 def get_yearly_trading_calendar(year, cal='LSE'):
     """
     Used to get the trading days using the LSE calendar
@@ -367,13 +366,11 @@ def get_yearly_trading_calendar(year, cal='LSE'):
 
 def get_dict_of_trading_calendars(years, cal='LSE'):
     """
-
     :param cal: calendar eg LSE, NYSE, EUREX
     :param years: a list of years
     :return: tradng calendars dictionary with years as the keys
     Pass this to the backtester
     """
-
     cal_dict = {}
     for year in years:
         cal_dict[year] = get_yearly_trading_calendar(year, cal)
@@ -405,20 +402,11 @@ def run(config, testing, tickers, _filename, initial_equity):
         calc_adj_returns=True
     )
 
-
-
-
-
     years = list(range(year_start, year_end + 1))
     calendars = get_dict_of_trading_calendars(years, cal='LSE')
 
-
-
-
-
     # Use the Buy and Hold Strategy
     strategy = ExponentialMomentum(tickers, events_queue, calendars)
-
 
     risk_per_stock = 0.001
 
@@ -439,8 +427,6 @@ def run(config, testing, tickers, _filename, initial_equity):
 
     # risk_manager = ExampleRiskManager()
     risk_manager = ExpoMomoRiskManager(PriceParser.parse(initial_equity))
-
-
 
     portfolio_handler = PortfolioHandler(
         PriceParser.parse(initial_equity),
