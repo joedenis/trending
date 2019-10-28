@@ -37,9 +37,10 @@ class RiskParityATRPositionSizer(AbstractPositionSizer):
 			else:
 				initial_order.action = "BOT"
 				initial_order.quantity = cur_quantity
-		elif portfolio.positions[ticker].quantity is not None and portfolio.positions[ticker].quantity > 0:
+		elif ticker in portfolio.positions and portfolio.positions[ticker].quantity > 0:
 			"""
 						rebalance if we already have a position
+						unfo
 			"""
 			weight = self.ticker_weights[ticker]
 			# Determine total portfolio value, work out dollar weight

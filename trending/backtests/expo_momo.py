@@ -1,5 +1,3 @@
-# TODO rebalance positions every second wednesday
-# todo rebalance portfolio every wednesday
 # TODO currently we are trading on the same day that the indicators are calculated! Could move this to trade the nxt day
 
 
@@ -32,8 +30,6 @@ from trending.trading_session import TradingSession
 from scipy.stats import linregress
 
 
-
-
 class ExponentialMomentum(AbstractStrategy):
     """
     A testing strategy that simply purchases (longs) an asset
@@ -58,15 +54,14 @@ class ExponentialMomentum(AbstractStrategy):
         self.time = None
         self.latest_prices = np.full(len(self.tickers), -1.0)
 
-
-
         # index 200dma calculation:
         self.index_dma_window = 200
         self.index_prices = deque(maxlen=self.index_dma_window)
         self.index_dma = False
 
         # TODO do we need a invested array
-        self.invested = np.zeros(len(self.tickers), dtype=bool)
+        # self.invested = np.zeros(len(self.tickers), dtype=bool)
+        self.tickers_invested = self._create_invested_list()
 
         # self.base_quantity = base_quantity
         # counting bars not needed for monthyl trading
@@ -77,8 +72,6 @@ class ExponentialMomentum(AbstractStrategy):
         self.sma_days_for_stocks = 100
 
         self.atr_period = atr_period
-
-        # self.tickers_invested = self._create_invested_list()
 
         # creating the queues for each asset in tickers list
         #  queue for closing prices adjusted
@@ -136,7 +129,6 @@ class ExponentialMomentum(AbstractStrategy):
             #     self.latest_prices[0] = price
             # else:
             #     self.latest_prices[1] = price
-
 
     def _end_of_month(self, cur_time):
         """
@@ -244,7 +236,7 @@ class ExponentialMomentum(AbstractStrategy):
         percentage_moves = abs(percentage_moves)
         max_move = np.max(percentage_moves)
 
-        if  max_move > 15.0:
+        if max_move > 15.0:
             return True
         else:
             return False
@@ -261,16 +253,15 @@ class ExponentialMomentum(AbstractStrategy):
             #  IF IT IS THE INDEX, THEN WE ONLY USE TO CALCULATE THE 200DAY MOVING AVERAGE
             if event.ticker == self.index_ticker:
                 self.index_prices.append(event.adj_close_price)
-                if  len(self.index_prices) == self.index_dma_window:
-                    close = self.index_prices[-1]
-                    are_we_above = self.index_prices[-1] > np.mean(self.index_prices)
+                if len(self.index_prices) == self.index_dma_window:
+                    # close = self.index_prices[-1]
+                    # are_we_above = self.index_prices[-1] > np.mean(self.index_prices)
                     self.index_dma = self.index_prices[-1] > np.mean(self.index_prices)
 
-
-            ticker = event.ticker
+            # ticker = event.ticker
             # add closing prices to prices queue
             self.ticker_bars[event.ticker].append(event.adj_close_price)
-            self.ticker_bars_unadj[event.ticker].append((event.close_price))
+            self.ticker_bars_unadj[event.ticker].append(event.close_price)
 
             # add todays prices prices and yesterdays prices
             # first we move the old price
@@ -278,7 +269,6 @@ class ExponentialMomentum(AbstractStrategy):
             # self.high_lows[event.ticker]['yes_close'] = self.high_lows[event.ticker]['today_low']
             # today_high = event.high_price
             # today_high =
-
 
             self.high_lows[event.ticker]['today_high'] = int(event.high_price * event.adj_close_price / event.close_price)
             self.high_lows[event.ticker]['today_low'] = int(event.low_price * event.adj_close_price / event.close_price)
@@ -295,15 +285,14 @@ class ExponentialMomentum(AbstractStrategy):
                 if len(self.true_range[event.ticker]) >= 20:
                     queue_of_tr = pd.Series(self.true_range[event.ticker])
                     atr_series = queue_of_tr.ewm(span=20, min_periods=self.atr_period).mean()
-                    self.atr[ticker] = atr_series
-
+                    self.atr[event.ticker] = atr_series
 
             # can only trade if all tickers have more than 90 days
-            can_trade = True
+            enough_days = True
             for ticker in self.ticker_bars:
                 if len(self.ticker_bars[ticker]) < self.window or len(self.ticker_bars[ticker]) < self.sma_days_for_stocks:
-                    can_trade = False
-                    if not can_trade:
+                    enough_days = False
+                    if not enough_days:
                         break
             #  only trade if end of month and we have seen all price observations for that day
 
@@ -314,83 +303,17 @@ class ExponentialMomentum(AbstractStrategy):
             #     just_80 = list(itertools.islice(self.ticker_bars[ticker], 10, 90))
             #     last = just_80[79]
 
-            """
-            Do any stocks we own need to be sold?
-            """
-            idxs = [i for i, x in enumerate(self.invested) if x]
+            # if there's enough days to trade and it is a wednesday and seen all prices
+            if enough_days and event.time.weekday() == 2 and all(self.latest_prices > -1.0):
+                """calculate momentums"""
 
-            if len(idxs) > 0:
-                print(idxs)
-
-            for x in idxs:
-                stock = self.tickers[x]
-                if event.ticker == stock:
-                    """
-                    check if we need to sell this
-                    """
-                    """
-                    if stock not in top assets ---> SELL
-                    if stock is below 100DMA --> SELL
-                    if gap over 15% --> SELL
-                    
-                    we need to update the tables every wednesday.  Either we keep the table as part of a class.
-                    Or for every tick coming in we calculate and then trade.
-                    
-                    """
-
-            """
-            rebalance if its a second wednesday 
-            what is the target size and what is the currents size of the position.
-            if the difference is too much rebalance 
-            
-            go through all the assets with booleans. And then place orders to buy.  The position sizer will see its a rebalance
-            then 
-        
-            """
-
-
-
-            """
-            Has the stock had a 15% move in the last 100 days if it has we cant buy or if todays price 
-            is below 100DMA
-            """
-
-            if can_trade:
-                all_days =list(itertools.islice(self.ticker_bars[ticker], 0, len(self.ticker_bars[ticker])))
-                all_days = np.asarray(all_days, dtype=np.float32)
-
-                hundred_day_sma = np.mean(all_days)
-
-                # difference_array = np.diff(all_days)
-
-                percentage_moves = np.diff(all_days) / all_days[1:] * 100
-                percentage_moves = abs(percentage_moves)
-                max_move = np.max(percentage_moves)
-
-                if self.ticker_bars[event.ticker][-1] < hundred_day_sma or max_move > 15.0:
-                    can_trade = False
-
-            if self.index_dma and can_trade and \
-                    self._end_of_month_trading_calendar(event.time) and \
-                    all(self.latest_prices > -1.0):
-
-                """
-                TODO                 
-                we know which assets we should be in.  So we need to control the liquidate and invest
-                signals.  Look out for not liquidating the first buys of the portfolio.
-                
-                look at our example in momo_two_stocks
-                
-                how do we timestamp individual assets coming through. guess once we have seen all the assets for a given day
-                calculate the indicator on that day.  Signal goes out to buy or sell for the next day.
-                
-                
-                """
                 # momentums = pd.DataFrame(self.tickers)
                 momenta = {}
                 for ticker in self.tickers:
                     # closing_prices = list(self.ticker_bars[ticker])
-                    closing_prices = list(itertools.islice(self.ticker_bars[ticker], self.sma_days_for_stocks - self.window, self.sma_days_for_stocks))
+                    closing_prices = list(
+                        itertools.islice(self.ticker_bars[ticker], self.sma_days_for_stocks - self.window,
+                                         self.sma_days_for_stocks))
                     momenta[ticker] = self.expo_momentum(closing_prices)
 
                 # momenta_df = pd.DataFrame(list(momenta.items), columns=['Asset', 'Momentum'])
@@ -400,37 +323,76 @@ class ExponentialMomentum(AbstractStrategy):
                 momenta.pop(self.index_ticker, None)
 
                 n = 2
-                top_n = {key:momenta[key] for key in sorted(momenta, key=momenta.get, reverse=True)[:n]}
+                top_n = {key: momenta[key] for key in sorted(momenta, key=momenta.get, reverse=True)[:n]}
 
                 top_assets = list(top_n.keys())
 
-
-                # print(top_assets[0:int(n/2) - 1])
-
+                """
+                Do any stocks we own need to be sold?
+                """
+                for stock in self.tickers_invested:
+                    if self.tickers_invested[stock]:
+                        """
+                        check if we need to sell this
+                        """
+                        """
+                        if stock not in top assets ---> SELL
+                        if stock is below 100DMA --> SELL
+                        if gap over 15% --> SELL
+                        
+                        we need to update the tables every wednesday.  Either we keep the table as part of a class.
+                        Or for every tick coming in we calculate and then trade.
+                        
+                        """
+                        if stock not in top_assets:
+                            liquidate_signal = SignalEvent(stock, "EXIT")
+                            self.events_queue.put(liquidate_signal)
+                            self.tickers_invested[stock] = False
+                        elif self.below_100_dma(self.ticker_bars[stock][-1], stock):
+                            liquidate_signal = SignalEvent(stock, "EXIT")
+                            self.events_queue.put(liquidate_signal)
+                            self.tickers_invested[stock] = False
+                        elif self.move_greater_than_15(stock):
+                            liquidate_signal = SignalEvent(stock, "EXIT")
+                            self.events_queue.put(liquidate_signal)
+                            self.tickers_invested[stock] = False
 
                 """
-                if we have seen all the stocks.
-                Then we want to buy the ones in our top list.
-                first we need to see how much money we have in the portfolio
+                can we buy any stocks
+                only if the index is above the 200DMA
+                and if the stock is above 100DMA 
+                and no move larger than 15%
+                go through the top momentum list.  if we do not own buy until we run out of cash                
                 """
-                # size = int(self.atr[ticker].iloc[-1])
-                #
-                # long_signal = SignalEvent(ticker, "BOT", size)
-                # # we need a suggested quantity in the SignalEvent above,  that is done with the risk system
-                # self.events_queue.put(long_signal)
+                if self.index_dma:
+                    for ticker in top_assets:
+                        if not self.below_100_dma(self.ticker_bars[ticker][-1], ticker) \
+                                and not self.move_greater_than_15(ticker):
 
+                            if self.tickers_invested[ticker]:
+                                pass
+                            else:
+                                size = int(self.atr[ticker].iloc[-1])
+
+                                long_signal = SignalEvent(ticker, "BOT", size)
+                                self.events_queue.put(long_signal)
+
+                                self.tickers_invested[ticker] = True
                 """
-                what about iterating through the assets we need to buy and places signals to buy
+                rebalance if its a second wednesday 
+                what is the target size and what is the currents size of the position.
+                if the difference is too much rebalance 
+                
+                go through all the assets with booleans. And then place orders to buy.  The position sizer will see its a rebalance
+                then          
                 """
+                if self.is_second_wed(event.time):
+                    for stock in self.tickers_invested:
+                        if self.tickers_invested[stock]:
+                            size = int(self.atr[stock].iloc[-1])
 
-                for ticker in top_assets:
-                    size = int(self.atr[ticker].iloc[-1])
-
-                    long_signal = SignalEvent(ticker, "BOT", size)
-                    self.events_queue.put(long_signal)
-
-                    ix = self.tickers.index(ticker)
-                    self.invested[ix] = True
+                            long_signal = SignalEvent(stock, "BOT", size)
+                            self.events_queue.put(long_signal)
 
 
 def get_yearly_trading_calendar(year, cal='LSE'):
