@@ -25,9 +25,14 @@ from trending.price_handler.yahoo_daily_csv_bar import YahooDailyCsvBarPriceHand
 
 import queue
 from collections import deque
+import itertools
+
 
 from trending.trading_session import TradingSession
 from scipy.stats import linregress
+
+
+
 
 class ExponentialMomentum(AbstractStrategy):
     """
@@ -40,19 +45,24 @@ class ExponentialMomentum(AbstractStrategy):
     """
     def __init__(
         self, tickers, events_queue, calendars,
-            window = 90, atr_period=20
+            window=90, atr_period=20, index_filter="SPY"
         # base_quantity=100
     ):
         self.tickers = tickers
+        self.index_ticker = index_filter
         self.events_queue = events_queue
         """
         keep track of the prices we have seen for a given day
-        
-        
         """
 
         self.time = None
         self.latest_prices = np.full(len(self.tickers), -1.0)
+
+
+        # index 200dma calculation:
+        self.index_dma_window = 200
+        self.index_prices = deque(maxlen=self.index_dma_window)
+        self.index_dma = False
 
         # TODO do we need a invested array
 
@@ -62,6 +72,8 @@ class ExponentialMomentum(AbstractStrategy):
         self.invested = False
         self.calendars = calendars
         self.window = window
+        self.sma_days_for_stocks = 100
+
         self.atr_period = atr_period
 
         self.tickers_invested = self._create_invested_list()
@@ -79,8 +91,8 @@ class ExponentialMomentum(AbstractStrategy):
         self.atr = {}
 
         for ticker in tickers:
-            self.ticker_bars[ticker] = deque(maxlen=self.window)
-            self.ticker_bars_unadj[ticker] = deque(maxlen=self.window)
+            self.ticker_bars[ticker] = deque(maxlen=self.sma_days_for_stocks)
+            self.ticker_bars_unadj[ticker] = deque(maxlen=self.sma_days_for_stocks)
             self.high_lows[ticker] = dict.fromkeys(['today_high', 'today_low', 'yes_close'])
             self.true_range[ticker] = deque(maxlen=100)
             # average true range will be stored here when we have a series
@@ -191,16 +203,23 @@ class ExponentialMomentum(AbstractStrategy):
         return ((1 + slope) ** 252) * (rvalue ** 2)  # annualize slope and multiply by R^2
 
 
-
-
-
     def calculate_signals(self, event):
         if (
             event.type in [EventType.BAR, EventType.TICK] and
             event.ticker in self.tickers
                 # and self._end_of_month_trading_calendar(event.time)
         ):
+            self.bars += 1
             self._set_correct_time_and_price(event)
+
+            #  IF IT IS THE INDEX, THEN WE ONLY USE TO CALCULATE THE 200DAY MOVING AVERAGE
+            if event.ticker == self.index_ticker:
+                self.index_prices.append(event.adj_close_price)
+                if  len(self.index_prices) == self.index_dma_window:
+                    close = self.index_prices[-1]
+                    are_we_above = self.index_prices[-1] > np.mean(self.index_prices)
+                    self.index_dma = self.index_prices[-1] > np.mean(self.index_prices)
+
 
             ticker = event.ticker
             # add closing prices to prices queue
@@ -232,23 +251,43 @@ class ExponentialMomentum(AbstractStrategy):
                     atr_series = queue_of_tr.ewm(span=20, min_periods=self.atr_period).mean()
                     self.atr[ticker] = atr_series
 
-            #         TODO we have the average true range working for a default of 20 days. This value is a large integer to avoid precision
-            # TODO translate the ATR into a portfolio weighting!
-            #
-
-
-
 
             # can only trade if all tickers have more than 90 days
             can_trade = True
             for ticker in self.ticker_bars:
-                if len(self.ticker_bars[ticker]) < self.window:
+                if len(self.ticker_bars[ticker]) < self.window or len(self.ticker_bars[ticker]) < self.sma_days_for_stocks:
                     can_trade = False
                     if not can_trade:
                         break
             #  only trade if end of month and we have seen all price observations for that day
 
-            if can_trade and self._end_of_month_trading_calendar(event.time) and all(self.latest_prices > -1.0):
+            # if can_trade:
+            #     print("ALL tickers have windows greater than", self.window, "or", self.sma_days_for_stocks)
+            #
+            #     todays_price = self.ticker_bars[ticker][-1]
+            #     just_80 = list(itertools.islice(self.ticker_bars[ticker], 10, 90))
+            #     last = just_80[79]
+
+            """
+            Has the stock had a 15% move in the last 100 days if it has we cant buy
+            """
+
+            if can_trade:
+                all_days =list(itertools.islice(self.ticker_bars[ticker], 0, len(self.ticker_bars[ticker])))
+                all_days = np.asarray(all_days, dtype=np.float32)
+
+                # difference_array = np.diff(all_days)
+
+                percentage_moves = np.diff(all_days) / all_days[1:] * 100
+                percentage_moves = abs(percentage_moves)
+                max_move = np.max(percentage_moves)
+                if max_move > 15.0:
+                    can_trade = False
+
+
+            if self.index_dma and can_trade and \
+                    self._end_of_month_trading_calendar(event.time) and \
+                    all(self.latest_prices > -1.0):
 
                 """
                 TODO if we can trade how to make sure we invest in the right tickers when the 
@@ -267,11 +306,16 @@ class ExponentialMomentum(AbstractStrategy):
                 # momentums = pd.DataFrame(self.tickers)
                 momenta = {}
                 for ticker in self.tickers:
-                    closing_prices = list(self.ticker_bars[ticker])
+                    # closing_prices = list(self.ticker_bars[ticker])
+                    closing_prices = list(itertools.islice(self.ticker_bars[ticker], self.sma_days_for_stocks - self.window, self.sma_days_for_stocks))
                     momenta[ticker] = self.expo_momentum(closing_prices)
 
                 # momenta_df = pd.DataFrame(list(momenta.items), columns=['Asset', 'Momentum'])
                 # momenta_df = momenta_df.sort_values(by = 'Momentum')
+
+                # remove the index ticker from the table as we won't buy that
+                momenta.pop(self.index_ticker, None)
+
                 n = 2
                 top_n = {key:momenta[key] for key in sorted(momenta, key=momenta.get, reverse=True)[:n]}
 
@@ -341,7 +385,7 @@ def run(config, testing, tickers, _filename, initial_equity):
     # Backtest information
     title = ['Exponential momentum on basket %s' % tickers]
 
-    year_start = 2016
+    year_start = 2013
     year_end = 2019
 
     start_date = datetime.datetime(year_start, 12, 28)
@@ -428,7 +472,7 @@ if __name__ == "__main__":
     config = settings.from_file(
         settings.DEFAULT_CONFIG_FILENAME, testing
     )
-    tickers = ["BP.L", "GSK.L", "ITV.L", "NG.L"]
+    tickers = ["BP.L", "GSK.L", "ITV.L", "NG.L", "SPY"]
 
     filename = "/home/joe/Desktop/expo_momo.png"
     initial_equity = 100000.0
