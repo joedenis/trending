@@ -27,7 +27,7 @@ class ExpoMomoRiskManager(AbstractRiskManager):
 			return [order_event]
 		else:
 			# not enough money to buy the stock
-			print("NO MONEY TO BUY FROM THE RISKMANAGER SO CANCELLING THE ORDER")
+			# print("NO MONEY TO BUY FROM THE RISKMANAGER SO CANCELLING THE ORDER")
 			return []
 
 

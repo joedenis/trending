@@ -1,3 +1,7 @@
+# TODO we have the ranking working and just going through the rankings at the end of the month and buying if we have cash from a risk manager
+# todo but the portfolio is not updating? The tearsheet is incorrect --- needs looking into!
+
+
 import datetime
 import calendar
 import pandas_market_calendars as mcal
