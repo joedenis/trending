@@ -184,6 +184,14 @@ class ExponentialMomentum(AbstractStrategy):
         # [1]
         return cur_day == end_day and cur_month in quarter_months
 
+    def is_second_wed(self, date):
+        """
+        used for the event date being the second wednesday of the month
+        :param date: datetime event.time
+        :return: bool
+        """
+        return date.weekday() == 2 and  8 <= date.day <= 14
+
     def _create_invested_list(self):
         """
 			Create a dictionary with each ticker as a key, with
@@ -431,11 +439,8 @@ def get_yearly_trading_calendar(year, cal='LSE'):
     uses pandas-market-calendars
     'NYSE', 'LSE', 'CME', 'EUREX', 'TSX'
     """
-
     lse = mcal.get_calendar(cal)
-
     year = lse.schedule(start_date=str(year) + '-01-01', end_date=str(year) + '-12-31')
-
     daily = mcal.date_range(year, frequency='1D')
 
     return daily
