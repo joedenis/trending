@@ -377,17 +377,14 @@ class ExponentialMomentum(AbstractStrategy):
 				if self.index_dma:
 					for ticker in top_assets:
 						if not self.below_100_dma(self.ticker_bars[ticker][-1], ticker) \
-								and not self.move_greater_than_15(ticker):
+								and not self.move_greater_than_15(ticker) \
+								and not self.tickers_invested[ticker]:
 
-							if self.tickers_invested[ticker]:
-								pass
-							else:
-								size = int(self.atr[ticker].iloc[-1])
+							size = int(self.atr[ticker].iloc[-1])
+							long_signal = SignalEvent(ticker, "BOT", size)
+							self.events_queue.put(long_signal)
 
-								long_signal = SignalEvent(ticker, "BOT", size)
-								self.events_queue.put(long_signal)
-
-								self.tickers_invested[ticker] = True
+							self.tickers_invested[ticker] = True
 				"""
 				rebalance if its a second wednesday 
 				what is the target size and what is the currents size of the position.
