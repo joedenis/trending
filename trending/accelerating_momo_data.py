@@ -8,7 +8,7 @@ def main():
 
     stocks = ["BP.L", "NG.L", "AZN.L", "BT-A.L", "GSK.L", "ITV.L"]
 
-    us_titans = ["TSLA"]
+    us_titans = ["TSLA", "FB", "AMZN", "AAPL", "MSFT"]
 
     crypto = ['BTC-USD', 'ETH-USD']
 
@@ -18,7 +18,7 @@ def main():
     # symbol = 'SPX'
     date_end = '2019-10-24'
 
-    for instrument in all_weather:
+    for instrument in us_titans:
         data_build.main(instrument, source, date_start, date_end, instrument)
 
 if __name__ == "__main__":

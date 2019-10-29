@@ -26,17 +26,24 @@ class RiskParityATRPositionSizer(AbstractPositionSizer):
 		"""
 		if the order is to EXIT we exit
 		otherwise if we already have a position, we look to rebalance
+
+		TODO we have a problem of an exit order coming through when we do not have a position
+		the exit order coming means our current cash in risk manager is being increased when it shouldn't be
+
 		"""
 		ticker = initial_order.ticker
 		if initial_order.action == "EXIT":
 			# Obtain current quantity and liquidate
-			cur_quantity = portfolio.positions[ticker].quantity
-			if cur_quantity > 0:
-				initial_order.action = "SLD"
-				initial_order.quantity = cur_quantity
+			if ticker in portfolio.positions:
+				cur_quantity = portfolio.positions[ticker].quantity
+				if cur_quantity > 0:
+					initial_order.action = "SLD"
+					initial_order.quantity = cur_quantity
+				else:
+					initial_order.action = "BOT"
+					initial_order.quantity = cur_quantity
 			else:
-				initial_order.action = "BOT"
-				initial_order.quantity = cur_quantity
+				initial_order.quantity = 0
 		elif ticker in portfolio.positions and portfolio.positions[ticker].quantity > 0:
 			"""
 						rebalance if we already have a position

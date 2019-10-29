@@ -50,6 +50,9 @@ class ExponentialMomentum(AbstractStrategy):
         """
         keep track of the prices we have seen for a given day
         """
+        # TODO see prices for all stocks that we have data for on that day. Some stocks weren't around in
+        # TODO get the first timestamp for each ticker in the price handler, check if current time is less than this, if so exclude
+
         self.time = None
         self.latest_prices = np.full(len(self.tickers), -1.0)
 
@@ -314,7 +317,9 @@ class ExponentialMomentum(AbstractStrategy):
                 # remove the index ticker from the table as we won't buy that
                 momenta.pop(self.index_ticker, None)
 
-                n = 2
+
+                n = int((len(self.tickers) - 1) / 2)
+
                 top_n = {key: momenta[key] for key in sorted(momenta, key=momenta.get, reverse=True)[:n]}
 
                 top_assets = list(top_n.keys())
@@ -418,7 +423,7 @@ def run(config, testing, tickers, _filename, initial_equity):
     # Backtest information
     title = ['Exponential momentum on basket %s' % tickers]
 
-    year_start = 2000
+    year_start = 2006
     year_end = 2019
 
     start_date = datetime.datetime(year_start, 12, 28)
@@ -438,13 +443,24 @@ def run(config, testing, tickers, _filename, initial_equity):
         calc_adj_returns=True
     )
 
+
+    """
+    we need to pass the first date dictionary ino the strategy,  the np of -1s needs t obe the length 
+    on a given day how many -1s are we expecting.
+    
+    """
+    first_date_dict = {}
+    for ticker in price_handler.tickers:
+        first_date_dict[ticker] = price_handler.tickers[ticker]['timestamp']
+
+
     years = list(range(year_start, year_end + 1))
     calendars = get_dict_of_trading_calendars(years, cal='LSE')
 
     # Use the Buy and Hold Strategy
     strategy = ExponentialMomentum(tickers, events_queue, calendars)
 
-    risk_per_stock = 0.002
+    risk_per_stock = 0.006
 
     ticker_weights = {}
     for ticker in tickers:
@@ -494,7 +510,7 @@ if __name__ == "__main__":
     config = settings.from_file(
         settings.DEFAULT_CONFIG_FILENAME, testing
     )
-    tickers = ["BP.L", "GSK.L", "ITV.L", "NG.L", "SPY"]
+    tickers = ["BP.L", "GSK.L", "ITV.L", "NG.L", "TSLA", "FB", "AMZN", "AAPL","SPY"]
 
     filename = "/home/joe/Desktop/expo_momo.png"
     initial_equity = 100000.0
