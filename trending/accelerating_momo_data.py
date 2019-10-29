@@ -8,7 +8,7 @@ def main():
 
     stocks = ["BP.L", "NG.L", "AZN.L", "BT-A.L", "GSK.L", "ITV.L"]
 
-    us_titans = ["TSLA", "FB", "AMZN", "AAPL", "MSFT"]
+    us_titans = ["TSLA", "FB", "AMZN", "AAPL", "MSFT", "SPY"]
 
     crypto = ['BTC-USD', 'ETH-USD']
 
