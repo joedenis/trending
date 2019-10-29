@@ -40,7 +40,7 @@ class ExponentialMomentum(AbstractStrategy):
     positions are adjusted for risk using atr (average true range) 20 day
     """
     def __init__(
-        self, tickers, events_queue, calendars,
+        self, tickers, events_queue, calendars, first_date_dict,
             window=90, atr_period=20, index_filter="SPY"
         # base_quantity=100
     ):
@@ -52,6 +52,8 @@ class ExponentialMomentum(AbstractStrategy):
         """
         # TODO see prices for all stocks that we have data for on that day. Some stocks weren't around in
         # TODO get the first timestamp for each ticker in the price handler, check if current time is less than this, if so exclude
+
+        self.first_date_dict = first_date_dict
 
         self.time = None
         self.latest_prices = np.full(len(self.tickers), -1.0)
@@ -124,6 +126,22 @@ class ExponentialMomentum(AbstractStrategy):
             #     self.latest_prices[0] = price
             # else:
             #     self.latest_prices[1] = price
+
+    def number_of_valid_ticks_on_day(self, today):
+        count = 0
+        for ticker in self.first_date_dict:
+            if today >= self.first_date_dict[ticker]:
+                count += 1
+        return count
+
+    def valid_tickers(self, today):
+        list = []
+        for ticker in self.first_date_dict:
+            if today >= self.first_date_dict[ticker]:
+                list.append(ticker)
+
+        return list
+
 
     def _end_of_month(self, cur_time):
         """
@@ -284,27 +302,26 @@ class ExponentialMomentum(AbstractStrategy):
 
             # can only trade if all tickers have more than 90 days
             enough_days = True
-            for ticker in self.ticker_bars:
+
+            valid_tickers_for_day = self.valid_tickers(self.time)
+
+            for ticker in valid_tickers_for_day:
                 if len(self.ticker_bars[ticker]) < self.window or len(self.ticker_bars[ticker]) < self.sma_days_for_stocks:
                     enough_days = False
                     if not enough_days:
                         break
-            #  only trade if end of month and we have seen all price observations for that day
 
-            # if can_trade:
-            #     print("ALL tickers have windows greater than", self.window, "or", self.sma_days_for_stocks)
-            #
-            #     todays_price = self.ticker_bars[ticker][-1]
-            #     just_80 = list(itertools.islice(self.ticker_bars[ticker], 10, 90))
-            #     last = just_80[79]
+            if enough_days:
+                number_of_stocks_prices_seen = np.sum(self.latest_prices > -1.0)
+                threshold = self.number_of_valid_ticks_on_day(self.time)
 
-            # if there's enough days to trade and it is a wednesday and seen all prices
-            if enough_days and event.time.weekday() == 2 and all(self.latest_prices > -1.0):
+
+            if enough_days and event.time.weekday() == 2 and number_of_stocks_prices_seen >= threshold:
                 """calculate momentums"""
 
                 # momentums = pd.DataFrame(self.tickers)
                 momenta = {}
-                for ticker in self.tickers:
+                for ticker in valid_tickers_for_day:
                     # closing_prices = list(self.ticker_bars[ticker])
                     closing_prices = list(
                         itertools.islice(self.ticker_bars[ticker], self.sma_days_for_stocks - self.window,
@@ -317,8 +334,8 @@ class ExponentialMomentum(AbstractStrategy):
                 # remove the index ticker from the table as we won't buy that
                 momenta.pop(self.index_ticker, None)
 
-
-                n = int((len(self.tickers) - 1) / 2)
+                # interested in top half best performing assets
+                n = int((len(valid_tickers_for_day) - 1) / 2)
 
                 top_n = {key: momenta[key] for key in sorted(momenta, key=momenta.get, reverse=True)[:n]}
 
@@ -423,7 +440,7 @@ def run(config, testing, tickers, _filename, initial_equity):
     # Backtest information
     title = ['Exponential momentum on basket %s' % tickers]
 
-    year_start = 2006
+    year_start = 2000
     year_end = 2019
 
     start_date = datetime.datetime(year_start, 12, 28)
@@ -458,9 +475,9 @@ def run(config, testing, tickers, _filename, initial_equity):
     calendars = get_dict_of_trading_calendars(years, cal='LSE')
 
     # Use the Buy and Hold Strategy
-    strategy = ExponentialMomentum(tickers, events_queue, calendars)
+    strategy = ExponentialMomentum(tickers, events_queue, calendars, first_date_dict)
 
-    risk_per_stock = 0.006
+    risk_per_stock = 0.012
 
     ticker_weights = {}
     for ticker in tickers:
