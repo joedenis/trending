@@ -1,6 +1,5 @@
 # TODO currently we are trading on the same day that the indicators are calculated! Could move this to trade the nxt day
 
-
 import datetime
 import calendar
 import pandas_market_calendars as mcal
