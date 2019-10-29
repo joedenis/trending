@@ -43,7 +43,6 @@ class ExponentialMomentum(AbstractStrategy):
 	def __init__(
 			self, tickers, events_queue, calendars, first_date_dict,
 			window=90, atr_period=20, index_filter="SPY"
-			# base_quantity=100
 	):
 		self.tickers = tickers
 		self.index_ticker = index_filter
