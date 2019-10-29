@@ -17,7 +17,7 @@ from trending.position_sizer.risk_parity_atr import RiskParityATRPositionSizer
 
 from trending.price_parser import PriceParser
 
-from trending.risk_manager.example import ExampleRiskManager
+# from trending.risk_manager.example import ExampleRiskManager
 from trending.risk_manager.expo_momo_risk_manager import ExpoMomoRiskManager
 from trending.portfolio_handler import PortfolioHandler
 from trending.price_handler.yahoo_daily_csv_bar import YahooDailyCsvBarPriceHandler
@@ -335,7 +335,7 @@ class ExponentialMomentum(AbstractStrategy):
 				# interested in top half best performing assets
 				n = int((len(valid_tickers_for_day) - 1) / 2)
 
-				top_n = {key:momenta[key] for key in sorted(momenta, key=momenta.get, reverse=True)[:n]}
+				top_n = {key: momenta[key] for key in sorted(momenta, key=momenta.get, reverse=True)[:n]}
 
 				top_assets = list(top_n.keys())
 
