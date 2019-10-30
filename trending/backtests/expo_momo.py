@@ -7,6 +7,8 @@ import numpy as np
 
 import pandas as pd
 
+import os
+
 from trending import settings
 
 from trending.strategy.base import AbstractStrategy
@@ -330,8 +332,8 @@ class ExponentialMomentum(AbstractStrategy):
 				# remove the index ticker from the table as we won't buy that
 				momenta.pop(self.index_ticker, None)
 
-				# interested in top half best performing assets
-				n = int((len(valid_tickers_for_day) - 1) / 2)
+				# interested in top fifth best performing assets
+				n = int((len(valid_tickers_for_day) - 1) / 5)
 
 				top_n = {key: momenta[key] for key in sorted(momenta, key=momenta.get, reverse=True)[:n]}
 
@@ -433,7 +435,7 @@ def run(config, testing, tickers, _filename, initial_equity):
 	# Backtest information
 	title = ['Exponential momentum on basket %s' % tickers]
 
-	year_start = 2000
+	year_start = 2016
 	year_end = 2019
 
 	start_date = datetime.datetime(year_start, 12, 28)
@@ -468,7 +470,7 @@ def run(config, testing, tickers, _filename, initial_equity):
 	# Use the Buy and Hold Strategy
 	strategy = ExponentialMomentum(tickers, events_queue, calendars, first_date_dict)
 
-	risk_per_stock = 0.012
+	risk_per_stock = 0.002
 
 	ticker_weights = {}
 	for ticker in tickers:
@@ -512,13 +514,26 @@ def run(config, testing, tickers, _filename, initial_equity):
 	return results
 
 
+def get_list_tickers(folder='/home/joe/PycharmProjects/trending/data'):
+	path = folder
+	files = [os.path.splitext(filename)[0] for filename in os.listdir(path)]
+
+	return files
+
 if __name__ == "__main__":
 	# Configuration data
 	testing = False
 	config = settings.from_file(
 		settings.DEFAULT_CONFIG_FILENAME, testing
 	)
-	tickers = ["BP.L", "GSK.L", "ITV.L", "NG.L", "TSLA", "FB", "AMZN", "AAPL", "SPY"]
+
+	# we take the tickers from the original folder
+	tickers = get_list_tickers()
+	tickers.append("SPY")
+
+	tickers = ["SPY", "BHGE", "AAPL", "CC", "CBS"]
+	print(len(tickers))
+	# tickers = ["BP.L", "GSK.L", "ITV.L", "NG.L", "TSLA", "FB", "AMZN", "AAPL", "SPY"]
 
 	filename = "/home/joe/Desktop/expo_momo.png"
 	initial_equity = 100000.0

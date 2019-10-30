@@ -18,7 +18,7 @@ def main():
     # symbol = 'SPX'
     date_end = '2019-10-24'
 
-    for instrument in us_titans:
+    for instrument in world:
         data_build.main(instrument, source, date_start, date_end, instrument)
 
 if __name__ == "__main__":
