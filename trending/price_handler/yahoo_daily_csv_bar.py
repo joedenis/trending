@@ -32,7 +32,9 @@ class YahooDailyCsvBarPriceHandler(AbstractBarPriceHandler):
         self.tickers_data = {}
         if init_tickers is not None:
             for ticker in init_tickers:
+                # print("Testing", ticker)
                 self.subscribe_ticker(ticker)
+                # print("Completed", ticker)
         self.start_date = start_date
         self.end_date = end_date
         self.bar_stream = self._merge_sort_ticker_data()

@@ -51,7 +51,7 @@ class ExponentialMomentum(AbstractStrategy):
 		"""
 		keep track of the prices we have seen for a given day
 		"""
-
+		# has the start and end dates that the ticker can be used for
 		self.first_date_dict = first_date_dict
 
 		self.time = None
@@ -109,10 +109,10 @@ class ExponentialMomentum(AbstractStrategy):
 			index = self.tickers.index(event.ticker)
 			self.latest_prices[index] = price
 
-			# if event.ticker == self.tickers[0]:
-			#     self.latest_prices[0] = price
-			# else:
-			#     self.latest_prices[1] = price
+		# if event.ticker == self.tickers[0]:
+		#     self.latest_prices[0] = price
+		# else:
+		#     self.latest_prices[1] = price
 		else:
 			self.time = event.time
 			# self.days += 1
@@ -120,27 +120,33 @@ class ExponentialMomentum(AbstractStrategy):
 			index = self.tickers.index(event.ticker)
 			self.latest_prices[index] = price
 
-			# if event.ticker == self.tickers[0]:
-			#     self.latest_prices[0] = price
-			# else:
-			#     self.latest_prices[1] = price
+		# if event.ticker == self.tickers[0]:
+		#     self.latest_prices[0] = price
+		# else:
+		#     self.latest_prices[1] = price
 
 	def number_of_valid_ticks_on_day(self, today):
 		count = 0
 		for ticker in self.first_date_dict:
-			if today >= self.first_date_dict[ticker]:
+			if self.first_date_dict[ticker][0] <= today <= self.first_date_dict[ticker][1]:
 				count += 1
 		return count
 
 	def valid_tickers(self, today):
+		"""
+		returns the list of tickers that are valid for todays date.
+		ie tickers that we have the prices for
+		"""
+
 		lister = []
 		for ticker in self.first_date_dict:
-			if today >= self.first_date_dict[ticker]:
+			if self.first_date_dict[ticker][0] <= today <= self.first_date_dict[ticker][1]:
 				lister.append(ticker)
 
 		return lister
 
-	def _end_of_month(self, cur_time):
+	@staticmethod
+	def _end_of_month(cur_time):
 		"""
 		Determine if the current day is at the end of the month.
 		"""
@@ -148,7 +154,8 @@ class ExponentialMomentum(AbstractStrategy):
 		end_day = calendar.monthrange(cur_time.year, cur_time.month)[1]
 		return cur_day == end_day
 
-	def _end_of_month_business(self, cur_time):
+	@staticmethod
+	def _end_of_month_business(cur_time):
 		year = cur_time.year
 		string = '1/1/' + str(year)
 		days = pd.date_range(string, periods=12, freq='BM')
@@ -174,7 +181,8 @@ class ExponentialMomentum(AbstractStrategy):
 		listy = month_ends.strftime('%Y-%m-%d')
 		return cur_date_string in set(listy)
 
-	def _end_of_quarter(self, cur_time):
+	@staticmethod
+	def _end_of_quarter(cur_time):
 		"""
 		Determine is current day is at the end of the quarter
 		"""
@@ -186,7 +194,8 @@ class ExponentialMomentum(AbstractStrategy):
 		# [1]
 		return cur_day == end_day and cur_month in quarter_months
 
-	def is_second_wed(self, date):
+	@staticmethod
+	def is_second_wed(date):
 		"""
 		used for the event date being the second wednesday of the month
 		:param date: datetime event.time
@@ -204,7 +213,8 @@ class ExponentialMomentum(AbstractStrategy):
 		tickers_invested = {ticker: False for ticker in self.tickers}
 		return tickers_invested
 
-	def expo_momentum(self, prices):
+	@staticmethod
+	def expo_momentum(prices):
 		"""
 		:param prices: closing prices of the asset
 		:return: the slope coefficient from a regression multiply by R^2 (regression coef)
@@ -312,6 +322,9 @@ class ExponentialMomentum(AbstractStrategy):
 
 			if enough_days:
 				number_of_stocks_prices_seen = np.sum(self.latest_prices > -1.0)
+				# todo threshold only needs to be calculated once per day
+				# todo the entire valid tickers could be calculated outside the strategy
+				# todo it could be calculated in run and therefore speed it all up.
 				threshold = self.number_of_valid_ticks_on_day(self.time)
 
 			if enough_days and event.time.weekday() == 2 and number_of_stocks_prices_seen >= threshold:
@@ -322,8 +335,11 @@ class ExponentialMomentum(AbstractStrategy):
 				for ticker in valid_tickers_for_day:
 					# closing_prices = list(self.ticker_bars[ticker])
 					closing_prices = list(
-						itertools.islice(self.ticker_bars[ticker], self.sma_days_for_stocks - self.window,
-										 self.sma_days_for_stocks))
+						itertools.islice(
+							self.ticker_bars[ticker], self.sma_days_for_stocks - self.window,
+							self.sma_days_for_stocks
+						)
+					)
 					momenta[ticker] = self.expo_momentum(closing_prices)
 
 				# momenta_df = pd.DataFrame(list(momenta.items), columns=['Asset', 'Momentum'])
@@ -381,7 +397,6 @@ class ExponentialMomentum(AbstractStrategy):
 						if not self.below_100_dma(self.ticker_bars[ticker][-1], ticker) \
 								and not self.move_greater_than_15(ticker) \
 								and not self.tickers_invested[ticker]:
-
 							size = int(self.atr[ticker].iloc[-1])
 							long_signal = SignalEvent(ticker, "BOT", size)
 							self.events_queue.put(long_signal)
@@ -433,9 +448,9 @@ def get_dict_of_trading_calendars(years, cal='LSE'):
 
 def run(config, testing, tickers, _filename, initial_equity):
 	# Backtest information
-	title = ['Exponential momentum on basket %s' % tickers]
+	title = ['Exponential momentum on basket %s' % len(tickers), "tickers"]
 
-	year_start = 2016
+	year_start = 2012
 	year_end = 2019
 
 	start_date = datetime.datetime(year_start, 12, 28)
@@ -461,8 +476,11 @@ def run(config, testing, tickers, _filename, initial_equity):
 	
 	"""
 	first_date_dict = {}
+	# last_date_dict = {}
 	for ticker in price_handler.tickers:
-		first_date_dict[ticker] = price_handler.tickers[ticker]['timestamp']
+		first_date, last_date = price_handler.tickers[ticker]['timestamp'], price_handler.tickers_data[ticker].index[-1]
+		first_date_dict[ticker] = (first_date, last_date)
+		# last_date_dict[ticker] = price_handler.tickers_data[ticker].index[-1]
 
 	years = list(range(year_start, year_end + 1))
 	calendars = get_dict_of_trading_calendars(years, cal='LSE')
@@ -520,6 +538,7 @@ def get_list_tickers(folder='/home/joe/PycharmProjects/trending/data'):
 
 	return files
 
+
 if __name__ == "__main__":
 	# Configuration data
 	testing = False
@@ -529,10 +548,13 @@ if __name__ == "__main__":
 
 	# we take the tickers from the original folder
 	tickers = get_list_tickers()
+	print("testing only the first 50 tickers")
+	tickers = tickers[:150]
 	tickers.append("SPY")
 
-	tickers = ["SPY", "BHGE", "AAPL", "CC", "CBS"]
-	print(len(tickers))
+	# tickers = ["SPY", "BHGE", "AAPL", "CC", "CBS"]
+	print("We have", len(tickers), "stocks in our tickers")
+
 	# tickers = ["BP.L", "GSK.L", "ITV.L", "NG.L", "TSLA", "FB", "AMZN", "AAPL", "SPY"]
 
 	filename = "/home/joe/Desktop/expo_momo.png"
