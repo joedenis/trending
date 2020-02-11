@@ -23,11 +23,10 @@ def praescire_closing_prices(
 
 	closing_prices = closing_prices[['Date', 'High', 'Low', 'Open', 'Close', 'Volume', 'Adj Close']]
 
-	closing_prices.to_csv('~/PycharmProjects/trending/trending/data/'+ save_name, index=False)
+	closing_prices.to_csv('~/PycharmProjects/trending/trending/data/' + save_name, index=False)
 
 	print(closing_prices)
 
 
 if __name__ == "__main__":
-	praescire_closing_prices(filename='Trades database 2020.xlsm',
-		sheet_number=2, save_name="PRAESCIRE20.csv")
+	praescire_closing_prices(filename='Trades database 2020.xlsm', save_name="PRAESCIRE20.csv")
