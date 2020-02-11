@@ -29,4 +29,5 @@ def praescire_closing_prices(
 
 
 if __name__ == "__main__":
-	praescire_closing_prices()
+	praescire_closing_prices(filename='Trades database 2020.xlsm',
+		sheet_number=2, save_name="PRAESCIRE20.csv")

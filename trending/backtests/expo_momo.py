@@ -42,7 +42,7 @@ class ExponentialMomentum(AbstractStrategy):
 	"""
 
 	def __init__(
-			self, tickers, events_queue, calendars, first_date_dict,
+			self, tickers, events_queue, calendars, first_date_df,
 			window=90, atr_period=20, index_filter="SPY"
 	):
 		self.tickers = tickers
@@ -52,7 +52,7 @@ class ExponentialMomentum(AbstractStrategy):
 		keep track of the prices we have seen for a given day
 		"""
 		# has the start and end dates that the ticker can be used for
-		self.first_date_dict = first_date_dict
+		self.first_date_df = first_date_df
 
 		self.time = None
 		self.latest_prices = np.full(len(self.tickers), -1.0)
@@ -126,11 +126,14 @@ class ExponentialMomentum(AbstractStrategy):
 		#     self.latest_prices[1] = price
 
 	def number_of_valid_ticks_on_day(self, today):
-		count = 0
-		for ticker in self.first_date_dict:
-			if self.first_date_dict[ticker][0] <= today <= self.first_date_dict[ticker][1]:
-				count += 1
-		return count
+		df_tickers = self.first_date_df[((self.first_date_df['start_date'] <= today) & (self.first_date_df['end_date'] >= today))]
+
+		return  df_tickers.shape[0]
+
+		# for ticker in self.first_date_df:
+		# 	if self.first_date_df[ticker][0] <= today <= self.first_date_dict[ticker][1]:
+		# 		count += 1
+		# return count
 
 	def valid_tickers(self, today):
 		"""
@@ -138,12 +141,18 @@ class ExponentialMomentum(AbstractStrategy):
 		ie tickers that we have the prices for
 		"""
 
-		lister = []
-		for ticker in self.first_date_dict:
-			if self.first_date_dict[ticker][0] <= today <= self.first_date_dict[ticker][1]:
-				lister.append(ticker)
 
-		return lister
+		df_tickers = self.first_date_df[((self.first_date_df['start_date'] <= today) & (self.first_date_df['end_date'] >= today))]
+
+		return df_tickers['ticker'].tolist()
+
+
+		# lister = []
+		# for ticker in self.first_date_dict:
+		# 	if self.first_date_dict[ticker][0] <= today <= self.first_date_dict[ticker][1]:
+		# 		lister.append(ticker)
+		#
+		# return lister
 
 	@staticmethod
 	def _end_of_month(cur_time):
@@ -312,13 +321,18 @@ class ExponentialMomentum(AbstractStrategy):
 			enough_days = True
 
 			valid_tickers_for_day = self.valid_tickers(self.time)
+			# todo here is where we check the burn in.  Logic needs changing otherwise
+
+			count_incomplete_tickers = 0
 
 			for ticker in valid_tickers_for_day:
 				if len(self.ticker_bars[ticker]) < self.window or len(
 						self.ticker_bars[ticker]) < self.sma_days_for_stocks:
+					count_incomplete_tickers += 1
 					enough_days = False
-					if not enough_days:
-						break
+					# if not enough_days:
+					# 	break
+			print("we do not have full window data and sma days for: ", count_incomplete_tickers, "tickers")
 
 			if enough_days:
 				number_of_stocks_prices_seen = np.sum(self.latest_prices > -1.0)
@@ -482,11 +496,19 @@ def run(config, testing, tickers, _filename, initial_equity):
 		first_date_dict[ticker] = (first_date, last_date)
 		# last_date_dict[ticker] = price_handler.tickers_data[ticker].index[-1]
 
+	first_date_df = pd.DataFrame(list(first_date_dict.items()), columns=['ticker', 'Dates'])
+	first_date_df[['start_date', 'end_date']] = pd.DataFrame(first_date_df['Dates'].tolist(), index=first_date_df.index)
+	first_date_df = first_date_df[['ticker', 'start_date', 'end_date']]
+	print(first_date_df)
+
+	# save the dataframe
+	first_date_df.to_pickle('tickers_date_range.pkl')
+
 	years = list(range(year_start, year_end + 1))
 	calendars = get_dict_of_trading_calendars(years, cal='LSE')
 
 	# Use the Buy and Hold Strategy
-	strategy = ExponentialMomentum(tickers, events_queue, calendars, first_date_dict)
+	strategy = ExponentialMomentum(tickers, events_queue, calendars, first_date_df)
 
 	risk_per_stock = 0.002
 
@@ -549,7 +571,7 @@ if __name__ == "__main__":
 	# we take the tickers from the original folder
 	tickers = get_list_tickers()
 	print("testing only the first 50 tickers")
-	tickers = tickers[:150]
+	tickers = tickers[:]
 	tickers.append("SPY")
 
 	# tickers = ["SPY", "BHGE", "AAPL", "CC", "CBS"]
