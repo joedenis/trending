@@ -75,13 +75,25 @@ class MonthlyLiquidateRebalanceStrategy(AbstractStrategy):
 
 
 def run(config, testing, tickers, filename):
+	"""
+	http://www.lazyportfolioetf.com/allocation/ray-dalio-all-weather/
+
+	All weather portfolio,
+	We show the regular weightings
+	And use 2x leveraged ETFs to show the leveraged version. 
+	"""
+
+
 	# Backtest information
 	title = [
 		'Monthly Liquidate/Rebalance on All-Weather\n30%/15%/40%/7.5%/7.5% SPY/IEF/TLT/GLD/DBC Portfolio'
 	]
-	initial_equity = 500000.0
-	start_date = datetime.datetime(2016, 1, 1)
-	end_date = datetime.datetime(2019, 6, 12)
+	# title = [
+	# 	'Monthly Liquidate/Rebalance on All-Weather2x\n30%/15%/40%/7.5%/7.5% FLGE/UST/UBT/DGP/DBC Portfolio'
+	# ]
+	initial_equity = 100000.0
+	start_date = datetime.datetime(2011, 1, 1)
+	end_date = datetime.datetime(2019, 12, 31)
 
 	# Use the Monthly Liquidate And Rebalance strategy
 	events_queue = queue.Queue()
@@ -98,6 +110,17 @@ def run(config, testing, tickers, filename):
 		"GLD": 0.075,
 		"DBC": 0.075
 	}
+
+	# ticker_weights = {
+	# 	"SSO":0.29,
+	# 	"FLGE": 0.29,
+	# 	"UST": 0.15,
+	# 	"UBT": 0.4,
+	# 	"DGP": 0.075,
+	# 	"DBC": 0.075,
+	# 	"SPY": 0.01
+	# }
+
 	position_sizer = LiquidateRebalancePositionSizer(
 		ticker_weights
 	)
@@ -107,6 +130,7 @@ def run(config, testing, tickers, filename):
 		config, strategy, tickers,
 		initial_equity, start_date, end_date,
 		events_queue, position_sizer=position_sizer,
+		adjusted_or_close='adj_close',
 		title=title, benchmark=tickers[0],
 	)
 	results = backtest.start_trading(testing=testing, filename=filename)
@@ -120,6 +144,7 @@ if __name__ == "__main__":
 		settings.DEFAULT_CONFIG_FILENAME, testing
 	)
 	tickers = ["SPY", "IEF", "TLT", "GLD", "DBC"]
-	filename = "/home/joe/Desktop/all_weather.png"
+	# tickers = ["FLGE", "UST", "UBT", "DGP", "DBC", "SPY"]
+	filename = "/home/joe/Desktop/all_weather_1x.png"
 	run(config, testing, tickers, filename)
 
