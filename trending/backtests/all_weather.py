@@ -44,6 +44,17 @@ class MonthlyLiquidateRebalanceStrategy(AbstractStrategy):
 		end_day = calendar.monthrange(cur_time.year, cur_time.month)[1]
 		return cur_day == end_day
 
+	def _end_of_year(self, cur_time):
+		"""
+		determine if current day is end of the year
+		"""
+		cur_month = cur_time.month
+		cur_day = cur_time.day
+		end_day = calendar.monthrange(cur_time.year, cur_time.month)[1]
+
+		return cur_day == end_day and cur_month == 12
+
+
 	def _create_invested_list(self):
 		"""
         Create a dictionary with each ticker as a key, with
@@ -57,7 +68,7 @@ class MonthlyLiquidateRebalanceStrategy(AbstractStrategy):
 	def calculate_signals(self, event):
 		"""
         For a particular received BarEvent, determine whether
-        it is the end of the month (for that bar) and generate
+        it is the end of the month (for that bar)/ quarter / year and generate
         a liquidation signal, as well as a purchase signal,
         for each ticker.
         """
@@ -86,14 +97,14 @@ def run(config, testing, tickers, filename):
 
 	# Backtest information
 	title = [
-		'Monthly Liquidate/Rebalance on All-Weather\n30%/15%/40%/7.5%/7.5% SPY/IEF/TLT/GLD/DBC Portfolio'
+		'quarterly Liquidate/Rebalance on All-Weather\n30%/15%/40%/7.5%/7.5% SPY/IEF/TLT/GLD/DBC Portfolio'
 	]
 	# title = [
 	# 	'Monthly Liquidate/Rebalance on All-Weather2x\n30%/15%/40%/7.5%/7.5% FLGE/UST/UBT/DGP/DBC Portfolio'
 	# ]
 	initial_equity = 100000.0
 	start_date = datetime.datetime(2011, 1, 1)
-	end_date = datetime.datetime(2019, 12, 31)
+	end_date = datetime.datetime(2020, 5, 5)
 
 	# Use the Monthly Liquidate And Rebalance strategy
 	events_queue = queue.Queue()

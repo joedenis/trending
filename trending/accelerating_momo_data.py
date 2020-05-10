@@ -27,7 +27,7 @@ def main():
 	source = 'yahoo'
 	date_start = '1999-09-16'
 	# symbol = 'SPX'
-	date_end = '2019-12-31'
+	date_end = '2020-05-05'
 
 	export_path = '/home/joe/PycharmProjects/trending/data/full_data/'
 	export_path = '/home/joe/PycharmProjects/trending/trending/data/'
