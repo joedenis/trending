@@ -22,7 +22,7 @@ class LiquidateRebalancePositionSizer(AbstractPositionSizer):
     def __init__(self, ticker_weights):
         self.ticker_weights = ticker_weights
 
-    def size_order(self, portfolio, initial_order):
+    def size_order(self, portfolio, initial_order, atr=None):
         """
         Size the order to reflect the dollar-weighting of the
         current equity account size based on pre-specified

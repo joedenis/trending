@@ -92,11 +92,11 @@ class DataBuild(Information):
 # print(df.head())
 
 
-def main(ticker, source, date_start, date_end, symbol):
+def main(ticker, source, date_start, date_end, symbol, export_path=Path(os.getcwd())):
 
     # export_path = Path(os.getcwd() + "/Datastore/")
-    export_path = Path(os.getcwd())
-    indicators_filepath = export_path / "data" / (symbol + "_indicators.csv")
+    # export_path = Path(os.getcwd())
+    # indicators_filepath = export_path / "data" / (symbol + "_indicators.csv")
 
     # bars ia a pandas dataframe that we will pass
 
@@ -105,16 +105,21 @@ def main(ticker, source, date_start, date_end, symbol):
     # bars = quandl.get('YAHOO/INDEX_GSPC', authtoken='yhwsDSnRYS6nsJN7kGAb', trim_start=date_start,
     #                  trim_end=date_end)
 
+    bars = bars[['Open', 'High', 'Low', 'Close', 'Volume', 'Adj Close']]
     print(bars.head())
     # create a csv for our own amusement
-    bars.to_csv(export_path / "data" / (symbol + ".csv"))
+
+    bars.to_csv(export_path + symbol + ".csv")
     # Create indicators
     # on instantiating our DataBuild class it automatically creates the indicators that we need in a pandas dataframe.
+
+    """
     infobars = DataBuild(symbol, bars)
 
     # we then take the indicators and save it to the csv
     infobars.indicators.to_csv(indicators_filepath)
 
+    """
 if __name__ == "__main__":
 
     ticker = '^GSPC'

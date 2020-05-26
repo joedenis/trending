@@ -85,18 +85,21 @@ def create_drawdowns(returns):
 
     # Create the high water mark
     for t in range(1, len(idx)):
-        hwm[t] = max(hwm[t - 1], returns.ix[t])
+        hwm[t] = max(hwm[t - 1], returns.iloc[t])
 
     # Calculate the drawdown and duration statistics
     perf = pd.DataFrame(index=idx)
     perf["Drawdown"] = (hwm - returns) / hwm
-    perf["Drawdown"].ix[0] = 0.0
+    perf["Drawdown"].iloc[0] = 0.0
     perf["DurationCheck"] = np.where(perf["Drawdown"] == 0, 0, 1)
     duration = max(
         sum(1 for i in g if i == 1)
         for k, g in groupby(perf["DurationCheck"])
     )
     return perf["Drawdown"], np.max(perf["Drawdown"]), duration
+
+def max_min_daily_returns(returns):
+    return max(returns), min(returns)
 
 
 def rsquared(x, y):

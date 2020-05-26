@@ -2,7 +2,7 @@ from .position import Position
 
 
 class Portfolio(object):
-    def __init__(self, price_handler, cash):
+    def __init__(self, price_handler, cash, adjusted_prices=None):
         """
         On creation, the Portfolio object contains no
         positions and all values are "reset" to the initial
@@ -19,6 +19,7 @@ class Portfolio(object):
         self.positions = {}
         self.closed_positions = []
         self.realised_pnl = 0
+        self.adj = adjusted_prices
 
     def _update_portfolio(self):
         """
@@ -33,6 +34,10 @@ class Portfolio(object):
             pt = self.positions[ticker]
             if self.price_handler.istick():
                 bid, ask = self.price_handler.get_best_bid_ask(ticker)
+            elif self.adj:
+                close_price = self.price_handler.get_last_adj_close(ticker)
+                bid = close_price
+                ask = close_price
             else:
                 close_price = self.price_handler.get_last_close(ticker)
                 bid = close_price
@@ -45,7 +50,7 @@ class Portfolio(object):
 
     def _add_position(
         self, action, ticker,
-        quantity, price, commission
+        quantity, price, commission, timestamp
     ):
         """
         Adds a new Position object to the Portfolio. This
@@ -65,7 +70,7 @@ class Portfolio(object):
                 ask = close_price
             position = Position(
                 action, ticker, quantity,
-                price, commission, bid, ask
+                price, commission, bid, ask, timestamp
             )
             self.positions[ticker] = position
             self._update_portfolio()
@@ -77,7 +82,8 @@ class Portfolio(object):
 
     def _modify_position(
         self, action, ticker,
-        quantity, price, commission
+        quantity, price, commission,
+            timestamp
     ):
         """
         Modifies a current Position object to the Portfolio.
@@ -90,7 +96,7 @@ class Portfolio(object):
         """
         if ticker in self.positions:
             self.positions[ticker].transact_shares(
-                action, quantity, price, commission
+                action, quantity, price, commission, timestamp
             )
             if self.price_handler.istick():
                 bid, ask = self.price_handler.get_best_bid_ask(ticker)
@@ -114,7 +120,7 @@ class Portfolio(object):
 
     def transact_position(
         self, action, ticker,
-        quantity, price, commission
+        quantity, price, commission, timestamp
     ):
         """
         Handles any new position or modification to
@@ -133,10 +139,10 @@ class Portfolio(object):
         if ticker not in self.positions:
             self._add_position(
                 action, ticker, quantity,
-                price, commission
+                price, commission, timestamp
             )
         else:
             self._modify_position(
                 action, ticker, quantity,
-                price, commission
+                price, commission, timestamp
             )

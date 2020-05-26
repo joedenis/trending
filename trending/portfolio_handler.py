@@ -5,7 +5,7 @@ from .portfolio import Portfolio
 class PortfolioHandler(object):
     def __init__(
         self, initial_cash, events_queue,
-        price_handler, position_sizer, risk_manager
+        price_handler, position_sizer, risk_manager, adj_or_close
     ):
         """
         The PortfolioHandler is designed to interact with the
@@ -30,7 +30,7 @@ class PortfolioHandler(object):
         self.price_handler = price_handler
         self.position_sizer = position_sizer
         self.risk_manager = risk_manager
-        self.portfolio = Portfolio(price_handler, initial_cash)
+        self.portfolio = Portfolio(price_handler, initial_cash, adj_or_close)
 
     def _create_order_from_signal(self, signal_event):
         """
@@ -77,10 +77,11 @@ class PortfolioHandler(object):
         quantity = fill_event.quantity
         price = fill_event.price
         commission = fill_event.commission
+        timestamp = fill_event.timestamp
         # Create or modify the position from the fill info
         self.portfolio.transact_position(
             action, ticker, quantity,
-            price, commission
+            price, commission, timestamp
         )
 
     def on_signal(self, signal_event):

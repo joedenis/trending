@@ -32,7 +32,9 @@ class YahooDailyCsvBarPriceHandler(AbstractBarPriceHandler):
         self.tickers_data = {}
         if init_tickers is not None:
             for ticker in init_tickers:
+                # print("Testing", ticker)
                 self.subscribe_ticker(ticker)
+                # print("Completed", ticker)
         self.start_date = start_date
         self.end_date = end_date
         self.bar_stream = self._merge_sort_ticker_data()
@@ -80,11 +82,11 @@ class YahooDailyCsvBarPriceHandler(AbstractBarPriceHandler):
         if start is None and end is None:
             return df.iterrows()
         elif start is not None and end is None:
-            return df.ix[start:].iterrows()
+            return df.iloc[start:].iterrows()
         elif start is None and end is not None:
-            return df.ix[:end].iterrows()
+            return df.iloc[:end].iterrows()
         else:
-            return df.ix[start:end].iterrows()
+            return df.iloc[start:end].iterrows()
 
     def subscribe_ticker(self, ticker):
         """

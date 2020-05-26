@@ -108,3 +108,17 @@ class AbstractBarPriceHandler(AbstractPriceHandler):
                 "available from the YahooDailyBarPriceHandler."
             )
             return None
+
+    def get_last_adj_close(self, ticker):
+        """
+                Returns the most recent adjusted closing price.
+                """
+        if ticker in self.tickers:
+            close_price = self.tickers[ticker]["adj_close"]
+            return close_price
+        else:
+            print(
+                "ADJUSTED close price for ticker %s is not "
+                "available from the YahooDailyBarPriceHandler."
+            )
+            return None
