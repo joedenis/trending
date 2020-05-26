@@ -1,42 +1,25 @@
 from trending import data_build
-import os
-
-
-def get_list_tickers(folder='/home/joe/PycharmProjects/trending/data'):
-	path = folder
-	files = [os.path.splitext(filename)[0] for filename in os.listdir(path)]
-
-	return files
 
 
 def main():
-	world = ["SPY", "VINEX", "VUSTX"]
-	sectors = ["XLB", "XLE", "XLF", "XLI", "XLK", "XLP", "XLU", "XLV", "XLY"]
-	all_weather = ["SPY", "IEF", "TLT", "GLD", "DBC"]
-	all_weather_2xleveraged = ["SSO", "UST", "UBT", "DGP", "DBC", "FLGE"]
+    world = ["SPY", "VINEX", "VUSTX"]
+    sectors = ["XLB", "XLE", "XLF", "XLI", "XLK", "XLP", "XLU", "XLV", "XLY"]
+    all_weather = ["SPY", "IEF", "TLT", "GLD", "DBC"]
 
-	stocks = ["BP.L", "NG.L", "AZN.L", "BT-A.L", "GSK.L", "ITV.L"]
+    stocks = ["BP.L", "NG.L", "AZN.L", "BT-A.L", "GSK.L", "ITV.L"]
 
-	us_titans = ["TSLA", "FB", "AMZN", "AAPL", "MSFT"]
+    us_titans = ["TSLA", "FB", "AMZN", "AAPL", "MSFT", "SPY"]
 
-	crypto = ['BTC-USD', 'ETH-USD']
+    crypto = ['BTC-USD', 'ETH-USD']
 
-	all_us_tickers = get_list_tickers()
+    # ticker = '^GSPC'
+    source = 'yahoo'
+    date_start = '1999-09-16'
+    # symbol = 'SPX'
+    date_end = '2019-10-24'
 
-	# ticker = '^GSPC'
-	source = 'yahoo'
-	date_start = '1999-09-16'
-	# symbol = 'SPX'
-	date_end = '2020-05-05'
-
-	export_path = '/home/joe/PycharmProjects/trending/data/full_data/'
-	export_path = '/home/joe/PycharmProjects/trending/trending/data/'
-
-	for instrument in all_weather:
-		print("Getting ticker:", instrument)
-		data_build.main(instrument, source, date_start, date_end, instrument, export_path)
-		print("Completed:", instrument)
-
+    for instrument in us_titans:
+        data_build.main(instrument, source, date_start, date_end, instrument)
 
 if __name__ == "__main__":
-	main()
+    main()
