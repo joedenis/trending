@@ -104,7 +104,7 @@ def run(config, testing, tickers, filename):
 	# ]
 	initial_equity = 100000.0
 	start_date = datetime.datetime(2011, 1, 1)
-	end_date = datetime.datetime(2020, 5, 5)
+	end_date = datetime.datetime(2020, 6, 5)
 
 	# Use the Monthly Liquidate And Rebalance strategy
 	events_queue = queue.Queue()

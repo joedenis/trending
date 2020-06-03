@@ -1,5 +1,6 @@
 from trending import data_build
-
+from pathlib import Path
+import os
 
 def main():
     world = ["SPY", "VINEX", "VUSTX"]
@@ -16,10 +17,10 @@ def main():
     source = 'yahoo'
     date_start = '1999-09-16'
     # symbol = 'SPX'
-    date_end = '2019-10-24'
+    date_end = '2020-06-01'
 
-    for instrument in us_titans:
-        data_build.main(instrument, source, date_start, date_end, instrument)
+    for instrument in all_weather:
+        data_build.main(instrument, source, date_start, date_end, instrument, export_path=str(Path(os.getcwd()) / 'data') +'/')
 
 if __name__ == "__main__":
     main()
