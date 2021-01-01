@@ -33,7 +33,6 @@ def create_cagr(equity, periods=252):
     for the portfolio, by determining the number of years
     and then creating a compound annualised rate based
     on the total return.
-
     Parameters:
     equity - A pandas Series representing the equity curve.
     periods - Daily (252), Hourly (252*6.5), Minutely(252*6.5*60) etc.
@@ -46,7 +45,6 @@ def create_sharpe_ratio(returns, periods=252):
     """
     Create the Sharpe ratio for the strategy, based on a
     benchmark of zero (i.e. no risk-free rate information).
-
     Parameters:
     returns - A pandas Series representing period percentage returns.
     periods - Daily (252), Hourly (252*6.5), Minutely(252*6.5*60) etc.
@@ -58,7 +56,6 @@ def create_sortino_ratio(returns, periods=252):
     """
     Create the Sortino ratio for the strategy, based on a
     benchmark of zero (i.e. no risk-free rate information).
-
     Parameters:
     returns - A pandas Series representing period percentage returns.
     periods - Daily (252), Hourly (252*6.5), Minutely(252*6.5*60) etc.
@@ -71,10 +68,8 @@ def create_drawdowns(returns):
     Calculate the largest peak-to-trough drawdown of the equity curve
     as well as the duration of the drawdown. Requires that the
     pnl_returns is a pandas Series.
-
     Parameters:
     equity - A pandas Series representing period percentage returns.
-
     Returns:
     drawdown, drawdown_max, duration
     """
@@ -97,9 +92,6 @@ def create_drawdowns(returns):
         for k, g in groupby(perf["DurationCheck"])
     )
     return perf["Drawdown"], np.max(perf["Drawdown"]), duration
-
-def max_min_daily_returns(returns):
-    return max(returns), min(returns)
 
 
 def rsquared(x, y):

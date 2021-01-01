@@ -104,7 +104,7 @@ def run(config, testing, tickers, filename):
 	# ]
 	initial_equity = 100000.0
 	start_date = datetime.datetime(2011, 1, 1)
-	end_date = datetime.datetime(2020, 6, 5)
+	end_date = datetime.datetime(2020, 12, 27)
 
 	# Use the Monthly Liquidate And Rebalance strategy
 	events_queue = queue.Queue()
@@ -157,5 +157,14 @@ if __name__ == "__main__":
 	tickers = ["SPY", "IEF", "TLT", "GLD", "DBC"]
 	# tickers = ["FLGE", "UST", "UBT", "DGP", "DBC", "SPY"]
 	filename = "/home/joe/Desktop/all_weather_1x.png"
-	run(config, testing, tickers, filename)
+	results = run(config, testing, tickers, filename)
+	strategy_returns = results['returns']
+	benchmark_returns = results['returns_b']
+
+	print(strategy_returns)
+	print(benchmark_returns)
+
+	import quantstats as qs
+	qs.reports.html(strategy_returns, benchmark_returns, title="ALL WEATHER",
+					output=filename[:-4] + ".html")
 

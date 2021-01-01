@@ -17,9 +17,9 @@ def main():
     source = 'yahoo'
     date_start = '1999-09-16'
     # symbol = 'SPX'
-    date_end = '2020-06-01'
+    date_end = '2020-12-27'
 
-    for instrument in all_weather:
+    for instrument in sectors:
         data_build.main(instrument, source, date_start, date_end, instrument, export_path=str(Path(os.getcwd()) / 'data') +'/')
 
 if __name__ == "__main__":

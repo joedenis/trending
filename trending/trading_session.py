@@ -171,6 +171,9 @@ class TradingSession(object):
             )
         )
         if not testing:
-            self.statistics.plot_results(filename)
+            try:
+                self.statistics.plot_results(filename)
+            except:
+                print("Didn't work with the statistics")
 
         return results

@@ -1,6 +1,6 @@
 from .base import AbstractStatistics
 from ..compat import pickle
-from trending.price_parser import PriceParser
+from ..price_parser import PriceParser
 
 import datetime
 import os
@@ -14,16 +14,13 @@ class SimpleStatistics(AbstractStatistics):
     """
     Simple Statistics provides a bare-bones example of statistics
     that can be collected through trading.
-
     Statistics included are Sharpe Ratio, Drawdown, Max Drawdown,
     Max Drawdown Duration.
-
     TODO think about Alpha/Beta, compare strategy of benchmark.
     TODO think about speed -- will be bad doing for every tick
     on anything that trades sub-minute.
     TODO think about slippage, fill rate, etc
     TODO brokerage costs?
-
     TODO need some kind of trading-frequency parameter in setup.
     Sharpe calculations need to know if daily, hourly, minutely, etc.
     """
@@ -82,7 +79,6 @@ class SimpleStatistics(AbstractStatistics):
     def calculate_sharpe(self, benchmark_return=0.00):
         """
         Calculate the sharpe ratio of our equity_returns.
-
         Expects benchmark_return to be, for example, 0.01 for 1%
         """
         excess_returns = pd.Series(self.equity_returns) - benchmark_return / 252
@@ -95,7 +91,6 @@ class SimpleStatistics(AbstractStatistics):
         Calculate the annualised Sharpe ratio of a returns stream
         based on a number of trading periods, N. N defaults to 252,
         which then assumes a stream of daily returns.
-
         The function assumes that the returns are the excess of
         those compared to a benchmark.
         """
@@ -112,8 +107,8 @@ class SimpleStatistics(AbstractStatistics):
         try:
             top_index = equity_series[:bottom_index].idxmax()
             pct = (
-                (equity_series.ix[top_index] - equity_series.ix[bottom_index]) /
-                equity_series.ix[top_index] * 100
+                (equity_series.iloc[top_index] - equity_series.iloc[bottom_index]) /
+                equity_series.iloc[top_index] * 100
             )
             return round(pct, 4)
         except ValueError:
