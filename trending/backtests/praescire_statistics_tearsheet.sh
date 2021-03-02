@@ -50,4 +50,4 @@ printf "*********copying .html to hugo directory **********\n"
 
 cp /home/joe/PycharmProjects/quantstats_git/quantstats/savedcharts/PRAESCIRE21.html /home/joe/Websites/loveit/static/results
 
-firefox /home/joe/Websites/loveit/static/results/PRAESCIRE21.html
+firefox /home/joe/Websites/loveit/static/results/PRAESCIRE20.html
