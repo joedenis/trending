@@ -35,19 +35,19 @@ $PYTHON "$GAME_2"
 
 popd > /dev/null 2>&1
 
-cp /home/joe/PycharmProjects/trending/trending/data/PRAESCIRE21.csv  /home/joe/PycharmProjects/quantstats_git/quantstats/data/
+cp /home/joe/PycharmProjects/trending/trending/data/PRAESCIRE22.csv  /home/joe/PycharmProjects/quantstats_git/quantstats/data/
 
 export PYTHONPATH=/home/joe/PycharmProjects/quantstats_git
 cd /home/joe/PycharmProjects/quantstats_git
 source venv/bin/activate
 
 python quantstats/samples/tester1.py
-python quantstats/samples/updateTimestampWebsite.py
+#python quantstats/samples/updateTimestampWebsite.py
 
 deactivate
 
 printf "*********copying .html to hugo directory **********\n"
 
-cp /home/joe/PycharmProjects/quantstats_git/quantstats/savedcharts/PRAESCIRE21.html /home/joe/Websites/loveit/static/results
+cp /home/joe/PycharmProjects/quantstats_git/quantstats/savedcharts/PRAESCIRE22.html /home/joe/Websites/loveit/static/results
 
-firefox /home/joe/Websites/loveit/static/results/PRAESCIRE20.html
+firefox /home/joe/Websites/loveit/static/results/PRAESCIRE22.html

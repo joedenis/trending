@@ -45,7 +45,7 @@ def run(config, testing, tickers, _filename):
 
     # Backtest information
     title = ['Buy and Hold Example on %s' % tickers[0]]
-    initial_equity = 500000.0
+    initial_equity = 850000.0
     start_date = datetime.datetime(2020, 1, 1)
 
     todays_month = int(datetime.datetime.today().strftime("%m"))
@@ -72,6 +72,6 @@ if __name__ == "__main__":
     config = settings.from_file(
         settings.DEFAULT_CONFIG_FILENAME, testing
     )
-    tickers = ["PRAESCIRE20"]
-    filename = "/home/joe/Desktop/PRAESCIRE20.png"
+    tickers = ["PRAESCIRE22"]
+    filename = "/home/joe/Desktop/PRAESCIRE22.png"
     run(config, testing, tickers, filename)
