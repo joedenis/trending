@@ -7,7 +7,7 @@ lxml==4.4.1
 matplotlib==3.1.1
 multipledispatch==0.6.0
 munch==2.3.2
-numpy==1.17.0
+numpy==1.22.0
 pandas==0.25.0
 pandas-datareader==0.7.4
 pyparsing==2.4.2
@@ -33,7 +33,7 @@ matplotlib==3.1.1
 multipledispatch==0.6.0
 multitasking==0.0.9
 munch==2.3.2
-numpy==1.17.0
+numpy==1.22.0
 pandas==0.25.0
 pandas-datareader==0.7.4
 pandas-market-calendars==1.2
