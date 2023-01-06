@@ -72,6 +72,6 @@ if __name__ == "__main__":
     config = settings.from_file(
         settings.DEFAULT_CONFIG_FILENAME, testing
     )
-    tickers = ["PRAESCIRE22"]
-    filename = "/home/joe/Desktop/PRAESCIRE22.png"
+    tickers = ["PRAESCIRE23"]
+    filename = "/home/joe/Desktop/PRAESCIRE23.png"
     run(config, testing, tickers, filename)

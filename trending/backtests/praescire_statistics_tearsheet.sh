@@ -35,7 +35,7 @@ $PYTHON "$GAME_2"
 
 popd > /dev/null 2>&1
 
-cp /home/joe/PycharmProjects/trending/trending/data/PRAESCIRE22.csv  /home/joe/PycharmProjects/quantstats_git/quantstats/data/
+cp /home/joe/PycharmProjects/trending/trending/data/PRAESCIRE23.csv  /home/joe/PycharmProjects/quantstats_git/quantstats/data/
 
 export PYTHONPATH=/home/joe/PycharmProjects/quantstats_git
 cd /home/joe/PycharmProjects/quantstats_git
@@ -48,6 +48,6 @@ deactivate
 
 printf "*********copying .html to hugo directory **********\n"
 
-cp /home/joe/PycharmProjects/quantstats_git/quantstats/savedcharts/PRAESCIRE22.html /home/joe/Websites/loveit/static/results
+cp /home/joe/PycharmProjects/quantstats_git/quantstats/savedcharts/PRAESCIRE23.html /home/joe/Websites/loveit/static/results
 
-firefox /home/joe/Websites/loveit/static/results/PRAESCIRE22.html
+firefox /home/joe/Websites/loveit/static/results/PRAESCIRE23.html
